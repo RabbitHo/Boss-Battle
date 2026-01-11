@@ -179,6 +179,11 @@ STUNNED = 12
 bossFly2 = pygame.image.load("boss.png")
 bossRect2 = bossFly2.get_rect(center=(bossX + 60, bossY + 50))
 
+attackQuantity = 0
+stunnedCount = 0
+stunnedCooldown = 0
+bossStunned_rect = bossFly2.get_rect()
+
 sidekickAlive = True
 boss_damaged = False
 boss_speed = 5
@@ -195,8 +200,6 @@ bossShooting = False
 shooting = False
 shootingCount = 0
 shootAnimation = False
-fireballX = 0
-fireballY = 0
 fireball_speed = 10
 fireball_vx = 0
 fireball_vy = 0
@@ -206,6 +209,10 @@ fireCount = 0
 spawn_fire = False
 explosionCount = 0
 exploding = False
+explosion_size = 0
+
+player_dead = False
+boss_dead = False
 
 fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
 fireballImageUnrotated = pygame.transform.scale(fireballImageUnsized, (100, 50))
@@ -226,7 +233,7 @@ attacking = False
 ################################################ FUNCTIONS ###################################################
 
 def startGame():
-    global attacking, current_time, animationFinished
+    global attacking, current_time, animationFinished, bossHealth, boss_dead, bossRect, player_dead
     running = True
 
     while running:
@@ -243,6 +250,16 @@ def startGame():
         bossIdle()
         CheckBossPosition()
         checkForEscape(keys)
+
+        if playerHealth <= 0:
+            player_dead = True
+            playerDeath()
+
+        if bossHealth <= 0:
+            boss_dead = True
+            bossRect.center = (-1000, -1000)
+            bossStunned_rect.center = (-10000, -10000)
+            bossDeath()
 
         if boss_going_back == True and animationFinished == True:
             bossGoBack()
@@ -315,18 +332,38 @@ def findEvents():
                 button_clicked = True
                 weapon_choice = 1
 
+def playerDeath():
+    playerDeathImage = pygame.image.load()
+
+def bossDeath():
+    global explosion_size, bossDeathCount
+
+    if bossDeathCount == 16:
+        bossRect.center = (-1000, -1000)
+        return
+    
+    bossDeathImageUnsized = pygame.image.load(f"boss_death/{bossDeathCount}.png").convert_alpha()
+    bossDeathCount += 1
+    bossDeathImage = pygame.transform.scale(bossDeathImageUnsized, (new_width + explosion_size, new_height + explosion_size))
+    bossDeath_rect = bossDeathImage.get_rect(center=(bossX, bossY))
+    explosion_size += 20
+
+    SCREEN.blit(bossDeathImage, bossDeath_rect)
+
 def bossAttack():
     global attacking, last_action_time, attackChoice, current_time, boss_pos, ATTACKLEFT, ATTACKRIGHT, ATTACKUP, ATTACKDOWN, EVERYWHERE, STUNNED
     global boss_going_back, bossRect2, bossRect, sidekickAlive, hypoteneuse
-    global fireballCooldown, last_fireball
+    global fireballCooldown, last_fireball, attackQuantity, stunnedCooldown, bossStunned_rect
 
-    if boss_going_back == True:
+    if attackQuantity == 0:
+        bossStunned_rect.center = (-10000, -10000)
+
+    if boss_going_back == True and attackQuantity == 0:
         bossGoBack()
         return
 
     if sidekickHealth <= 0:
        sidekickAlive = False
-       #bossRect2.topleft = (-1000, -1000)
        sidekickDeath()
        return
     
@@ -335,31 +372,57 @@ def bossAttack():
 
     current_time = pygame.time.get_ticks() 
 
-    if current_time - last_action_time >= 5000 and attacking == True and sidekickAlive == False:
+    if attacking == True and sidekickAlive == False:
         attacking = False
         boss_going_back = True
+        attackQuantity += 1
         return
 
-    if attacking == False:
-       last_fireball = fireballCooldown
-       last_action_time = current_time
-       attacking = True
+    if attacking == False and boss_dead == False:
+        last_fireball = fireballCooldown
+        last_action_time = current_time
+        attackChoice = random.randint(1, 2)
+        if attackQuantity == 0:
+            attacking = True
+        
+        else:
+            bossStunned()
 
-    if boss_going_back == False:
-       if attackChoice <= ATTACKLEFT:
-              bossAttackLeft()
+    if boss_going_back == False and attackQuantity == 0 and boss_dead == False:
+        if attackChoice <= ATTACKLEFT:
+            bossAttackLeft()
        
-       elif attackChoice <= ATTACKRIGHT and attackChoice > ATTACKLEFT:
-              bossAttackRight()
+        elif attackChoice <= ATTACKRIGHT and attackChoice > ATTACKLEFT:
+            bossAttackRight()
 
-       elif attackChoice <= ATTACKUP and attackChoice > ATTACKRIGHT:
-              bossAttackUp()
+        elif attackChoice <= ATTACKUP and attackChoice > ATTACKRIGHT:
+            bossAttackUp()
 
-       elif attackChoice <= ATTACKDOWN and attackChoice > ATTACKUP:
-              bossAttackDown()
+        elif attackChoice <= ATTACKDOWN and attackChoice > ATTACKUP:
+            bossAttackDown()
        
-       else:
-              bossAttackEverywhere()
+        else:
+            bossAttackEverywhere()
+
+def bossStunned():
+    global stunnedCount, bossRect, stunnedCooldown, attackQuantity, bossStunned_rect
+    current_time = pygame.time.get_ticks()
+    if stunnedCooldown == 0:
+        stunnedCooldown = pygame.time.get_ticks()
+
+    stunnedImageUnsized = pygame.image.load(f"boss_stunned/{stunnedCount}.png").convert_alpha()
+    stunnedCount += 1
+    stunnedImage = pygame.transform.scale(stunnedImageUnsized, (new_width, new_height))
+    bossStunned_rect = stunnedImage.get_rect(topleft=(bossX, bossY))
+
+    if stunnedCount == 12:
+        stunnedCount = 0
+
+    if current_time - stunnedCooldown >= 5000:
+        attackQuantity = 0
+        stunnedCooldown = 0
+
+    SCREEN.blit(stunnedImage, bossStunned_rect)
 
 def bossAttackLeft():
     global boss_animation_count, bossX, bossY, bossRect, bossLanded
@@ -633,7 +696,8 @@ def bossGoBack():
         bossLanded = False
 
     bossRect.topleft = (bossX, bossY)
-    SCREEN.blit(bossFly, bossRect)
+    if boss_dead == False:
+        SCREEN.blit(bossFly, bossRect)
     
 def findHypoteneuse(targetX, targetY, userX, userY, hypoteneuse, speed):
     run = targetX - userX
@@ -1000,7 +1064,7 @@ def checkIfHit():
               blocked = False
 
     if playerGotHit == False:
-        if player_rect.colliderect(bossRect):
+        if player_rect.colliderect(bossRect) or player_rect.colliderect(bossStunned_rect):
             playerX += 200
             playerY -= 100
             playerGotHit = True
@@ -1205,11 +1269,13 @@ def bossIdle():
     
 
     bossRect.topleft = boss_pos
+
+    #Draw boss hitbox
     #pygame.draw.rect(SCREEN, (0, 255, 0), bossRect, 2)
 
 
     bossFly = pygame.transform.scale(bossFlyUnsized, (new_width, new_height))
-    if boss_damaged == False and attacking == False and boss_going_back == False:
+    if boss_damaged == False and attacking == False and boss_going_back == False and attackQuantity == 0:
         boss_animation_count = 0
         SCREEN.blit(bossFly, (boss_pos))
 
