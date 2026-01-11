@@ -189,6 +189,10 @@ bossDeathCount = 0
 boss_going_back = False
 animationFinished = False
 hypoteneuse = 0
+fireballCooldown = 0
+last_fireball = 0
+bossShooting = False
+shootingCount = 0
 
 last_action_time = pygame.time.get_ticks()
 
@@ -290,6 +294,7 @@ def findEvents():
 def bossAttack():
     global attacking, last_action_time, attackChoice, current_time, boss_pos, ATTACKLEFT, ATTACKRIGHT, ATTACKUP, ATTACKDOWN, EVERYWHERE, STUNNED
     global boss_going_back, bossRect2, bossRect, sidekickAlive, hypoteneuse
+    global fireballCooldown, last_fireball
 
     if boss_going_back == True:
         bossGoBack()
@@ -312,7 +317,7 @@ def bossAttack():
         return
 
     if attacking == False:
-
+       last_fireball = fireballCooldown
        last_action_time = current_time
        attacking = True
 
@@ -336,7 +341,7 @@ def bossAttackLeft():
     global boss_animation_count, attacking, bossX, bossY, boss_pos, bossRect, hypoteneuse, bossLanded
     global boss_animation_count2, bossX2, bossY2, bossRect2, boss_flipped, shoot_arrow, sidekickHealth
     global is_fired, bow_shoot, allow_angle, playerGotHit, sidekickGotHit, bossFly2, bossRect2, sidekickAlive, leftHypoteneuse
-    print("He attacked left...")
+    global hit, boomrng_hit, last_fireball, bossShooting
 
     bossFlyUnsized = pygame.image.load(f"boss_idle/{boss_animation_count}.png")
     boss_animation_count += 1
@@ -433,7 +438,30 @@ def bossAttackLeft():
                 if sidekickHealth < 0:
                     sidekickHealth = 0
        
-        if sidekickAlive == True and sidekickHealth > 0:
+        if weapon_choice == SWORD and hit == False:
+            if sword_swing and swordRect.colliderect(bossRect2):
+              sidekickHealth -= 7
+              sidekickGotHit = True
+              hit = True
+
+            else:
+                hit = False
+
+        if weapon_choice == BOOMRNG and boomrng_hit == False:
+            if boomrng_rect.colliderect(bossRect2):
+                boomrng_hit = True
+                sidekickGotHit = True
+                sidekickHealth -= 30
+       
+        fireballCooldown = pygame.time.get_ticks()
+        if fireballCooldown - last_fireball >= 2000 and bossShooting == False:
+            last_fireball = fireballCooldown
+            bossShooting = True
+       
+        if bossShooting == True:
+            shootFireball()
+
+        if sidekickAlive == True and sidekickHealth > 0 and bossShooting == False:
               SCREEN.blit(bossFly2, (bossX2, bossY2))
 
         pygame.draw.rect(SCREEN, GREEN, bossRect2, 3)
@@ -447,6 +475,38 @@ def bossAttackLeft():
             pygame.draw.rect(SCREEN, RED, (bossX2 - 10, bossY2 - 20, 100, 15))
             pygame.draw.rect(SCREEN, BLACK, (bossX2 - 10, bossY2 - 20, 100, 15), 3)
             pygame.draw.rect(SCREEN, BLACK, (bossX2 - 10, bossY2 - 20, 100 - sidekickHealth, 15))
+
+def shootFireball():
+    sidekickShoot()
+    fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
+    fireballImageUnrotated = pygame.transform.scale(fireballImageUnsized, (100, 50))
+    fireball_rect = fireballImageUnrotated.get_rect(topleft=(bossX2, bossY2))
+
+    dx = playerX - fireball_rect.centerx
+    dy = playerY - fireball_rect.centery
+
+    angle_radians = math.atan2(-dy, dx)
+    angle_degrees = math.degrees(angle_radians)
+
+    fireball_angle = angle_degrees - 90
+
+    fireballImage = pygame.transform.rotate(fireballImageUnrotated, fireball_angle)
+
+    SCREEN.blit(fireballImage, fireball_rect)
+
+def sidekickShoot():
+    global shootingCount
+    shootingImageUnsized = pygame.image.load(f"boss_attack/{shootingCount}.png").convert_alpha()
+    shootingCount += 1
+
+    if shootingCount == 8:
+        shootingCount = 0
+        
+    shootingImage = pygame.transform.scale(shootingImageUnsized, (new_width, new_height))
+    shooting_rect = shootingImage.get_rect(center=(bossX2, bossY2))
+
+    SCREEN.blit(shootingImage, shooting_rect)
+
 
 def bossGoBack():
     global boss_animation_count, bossX, bossY, bossRect, boss_going_back, attacking, animationFinished, hypoteneuse, sidekickAlive, bossLanded
@@ -813,25 +873,32 @@ def checkIfHit():
                 shieldTime = pygame.time.get_ticks()
                 last_action_time = shieldTime
 
-        if blocked == True:
-              shield = pygame.image.load("shield.png").convert_alpha()
-              shield_rect = shield.get_rect(topleft=(bossX - 15, bossY - 10))
-              shield = pygame.transform.scale(shield, (bossWidth + 30, bossHeight + 30))
-
-              SCREEN.blit(shield, shield_rect)
-
-              shieldTime = pygame.time.get_ticks()
-              if shieldTime - last_action_time >= 1000:
-                     blocked = False
-
                 
     if boomrng_hit == False:
         if weapon_choice == BOOMRNG:
             if boomrng_rect.colliderect(bossRect):
                 boomrng_hit = True
-                boss_damaged = True
-                bossHealth -= 10
-                print(bossHealth)
+
+                if attacking == False:
+                     boss_damaged = True
+                     bossHealth -= 10
+                     print(bossHealth)
+
+                else:
+                    blocked = True
+                    shieldTime = pygame.time.get_ticks()
+                    last_action_time = shieldTime
+
+    if blocked == True:
+       shield = pygame.image.load("shield.png").convert_alpha()
+       shield_rect = shield.get_rect(topleft=(bossX - 15, bossY - 10))
+       shield = pygame.transform.scale(shield, (bossWidth + 30, bossHeight + 30))
+
+       SCREEN.blit(shield, shield_rect)
+
+       shieldTime = pygame.time.get_ticks()
+       if shieldTime - last_action_time >= 1000:
+              blocked = False
 
     if playerGotHit == False:
         if player_rect.colliderect(bossRect):
