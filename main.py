@@ -198,10 +198,25 @@ shootAnimation = False
 fireballX = 0
 fireballY = 0
 fireball_speed = 10
+fireball_vx = 0
+fireball_vy = 0
+sidekick_animation = 0
+fireCooldown = 0
+fireCount = 0
+spawn_fire = False
+explosionCount = 0
+exploding = False
 
 fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
 fireballImageUnrotated = pygame.transform.scale(fireballImageUnsized, (100, 50))
 fireball_rect = fireballImageUnrotated.get_rect(topleft=(bossX2, bossY2))
+fire_rect = fireballImageUnrotated.get_rect(topleft=(bossX2, bossY2))
+
+swordRect = swordRect = pygame.Rect(player_rect.centerx + 670, player_rect.centery - 700, 25, 10)
+
+boomrngImage = pygame.image.load("boomerang.png").convert_alpha()
+boomrng_rect = boomrngImage.get_rect(center=(boomrngX, boomrngY))
+boomrng_rect.center = (boomrngX + 4000, boomrngY + 4000)
 
 last_action_time = pygame.time.get_ticks()
 
@@ -347,10 +362,11 @@ def bossAttack():
               bossAttackEverywhere()
 
 def bossAttackLeft():
-    global boss_animation_count, attacking, bossX, bossY, boss_pos, bossRect, hypoteneuse, bossLanded
-    global boss_animation_count2, bossX2, bossY2, bossRect2, boss_flipped, shoot_arrow, sidekickHealth
-    global is_fired, bow_shoot, allow_angle, playerGotHit, sidekickGotHit, bossFly2, bossRect2, sidekickAlive, leftHypoteneuse
-    global hit, boomrng_hit, last_fireball, bossShooting, shootAnimation, fireball_rect, fireballImageUnrotated, shooting
+    global boss_animation_count, bossX, bossY, bossRect, bossLanded
+    global boss_animation_count2, bossX2, bossY2, boss_flipped, shoot_arrow, sidekickHealth
+    global is_fired, bow_shoot, allow_angle, sidekickGotHit, bossRect2, leftHypoteneuse
+    global hit, boomrng_hit, last_fireball, bossShooting, shootAnimation, fireball_rect, fireballImageUnrotated, shooting, fireball_vx, fireball_vy
+    global shootingCount, bossFly2
 
     bossFlyUnsized = pygame.image.load(f"boss_idle/{boss_animation_count}.png")
     boss_animation_count += 1
@@ -391,9 +407,10 @@ def bossAttackLeft():
             bossY = leftY
             bossLanded = True
 
+        #Show boss hitbox
         #pygame.draw.rect(SCREEN, (0, 255, 0), bossRect, 2)
 
-        #SCREEN.blit(left_surf, left_rect)
+        #Show boss destination hitbox
         #pygame.draw.rect(SCREEN, RED, left_rect, 3)
 
     elif bossLanded == True and sidekickAlive == True:
@@ -466,15 +483,16 @@ def bossAttackLeft():
         if fireballCooldown - last_fireball >= 2000 and bossShooting == False:
             last_fireball = fireballCooldown
             bossShooting = True
+            shooting = True
        
         if bossShooting == True:
             if shooting == True:
                 fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
                 fireballImageUnrotated = pygame.transform.scale(fireballImageUnsized, (100, 50))
-                fireball_rect = fireballImageUnrotated.get_rect(topleft=(bossX2, bossY2))
+                fireball_rect = fireballImageUnrotated.get_rect(center=(bossRect2.center))
 				
-                dx = fireballX - fireball_rect.centerx
-                dy = fireballY - fireball_rect.centery
+                dx = playerX - fireball_rect.centerx
+                dy = playerY - fireball_rect.centery
 
                 distance = math.hypot(dx, dy)
 
@@ -483,9 +501,14 @@ def bossAttackLeft():
                     fireball_vy = dy / distance * fireball_speed
 
                 shooting = False
+                shootingCount = 0
 					
             shootAnimation = True
             shootFireball()
+
+        if spawn_fire:
+            createFire()
+
 
         if sidekickAlive == True and sidekickHealth > 0 and bossShooting == False:
             SCREEN.blit(bossFly2, (bossX2, bossY2))
@@ -503,51 +526,92 @@ def bossAttackLeft():
             pygame.draw.rect(SCREEN, BLACK, (bossX2 - 10, bossY2 - 20, 100 - sidekickHealth, 15))
 
 def shootFireball():
-    global hypoteneuse, fireballX, fireballY, fireball_speed, bossShooting, shooting, fireball_rect
+    global fireball_speed, bossShooting, shooting, fireball_rect, fireball_vx, fireball_vy, last_action_time, fireX, fireY, spawn_fire, fireCooldown
     if shootAnimation == True:
         sidekickShoot()
 
-    fireballX = fireball_rect.centerx
-    fireballY = fireball_rect.centery
+    fireball_rect.centerx += fireball_vx
+    fireball_rect.centery += fireball_vy
 
-    dx = playerX - fireball_rect.centerx
-    dy = playerY - fireball_rect.centery
+    fireball_angle = math.degrees(math.atan2(-fireball_vy, fireball_vx))
 
-    angle_radians = math.atan2(-dy, dx)
-    angle_degrees = math.degrees(angle_radians)
+    fireballImage = pygame.transform.rotate(fireballImageUnrotated, fireball_angle + 180)
+    rotated_rect = fireballImage.get_rect(center=fireball_rect.center)
 
-    fireball_angle = angle_degrees - 160
+    if not SCREEN.get_rect().colliderect(fireball_rect):
+        last_action_time = fireCooldown
+        fireCooldown = 0
+        if fireball_rect.centerx > 750:
+            fireX = 700
+            fireY = 0
+        
+        elif fireball_rect.centerx < 0:
+            fireX = 10
+            fireY = 0
+            
+        else:
+            fireX = fireball_rect.centerx
+            fireY = fireball_rect.centery
 
-    fireballX, fireballY, hypoteneuse = findHypoteneuse(playerX, playerY, fireballX, fireballY, hypoteneuse, fireball_speed)
-
-    fireballImage = pygame.transform.rotate(fireballImageUnrotated, fireball_angle)
-
-    fireball_rect = fireballImage.get_rect(topleft=(fireballX, fireballY))
-
-    if hypoteneuse <= fireball_speed:
+        spawn_fire = True
         bossShooting = False
         shooting = True
+        fireball_rect.center = (1000, 1000)
 
-    SCREEN.blit(fireballImage, fireball_rect)
+    SCREEN.blit(fireballImage, rotated_rect)
+
+def createFire():
+    global fireCount, spawn_fire, fireCooldown, fire_rect
+    fireCooldown = pygame.time.get_ticks()
+    fireImageUnsized = pygame.image.load(f"fire/{fireCount}.png").convert_alpha()
+    fireImage = pygame.transform.scale(fireImageUnsized, (100, 100))
+    fire_rect = fireImage.get_rect(center=(fireX, fireY - 70))
+    fireCount += 1
+
+    if fireCount == 7:
+        fireCount = 0
+
+    if fireCooldown - last_action_time <= 3000:
+        SCREEN.blit(fireImage, fire_rect)
+    
+    else:
+        spawn_fire = False
+
+        fire_rect.center = (1000, 1000)
 
 def sidekickShoot():
-    global shootingCount, shootAnimation, bossShooting
-    shootingImageUnsized = pygame.image.load(f"boss_attack/{shootingCount}.png").convert_alpha()
-    shootingCount += 1
+    global shootingCount, shootAnimation, bossShooting, sidekick_animation
 
     if shootingCount == 8:
-        shootingCount = 0
-        shootAnimation = False
+        sidekickUnsized = pygame.image.load(f"boss_idle2/{sidekick_animation}.png")
+        sidekick_animation += 1
+        sidekickFly = pygame.transform.scale(sidekickUnsized, (new_width, new_height))
 
-    shootingImage = pygame.transform.scale(shootingImageUnsized, (new_width, new_height))
-    shooting_rect = shootingImage.get_rect(topleft=(bossX2, bossY2))
+        sidekick_rect = sidekickFly.get_rect(center=(bossX2 + 50, bossY2 + 50))
 
-    SCREEN.blit(shootingImage, shooting_rect)
+        if boss_flipped == False:
+            sidekickFly = pygame.transform.flip(sidekickFly, True, False)
 
+        if sidekick_animation == 12:
+            sidekick_animation = 0
+
+        SCREEN.blit(sidekickFly, sidekick_rect)
+    
+    else:
+        shootingImageUnsized = pygame.image.load(f"boss_attack/{shootingCount}.png").convert_alpha()
+        shootingCount += 1
+
+
+        shootingImage = pygame.transform.scale(shootingImageUnsized, (new_width, new_height))
+        shooting_rect = shootingImage.get_rect(topleft=(bossX2, bossY2))
+
+        if playerX > fireball_rect.centerx:
+            shootingImage = pygame.transform.flip(shootingImage, True, False)
+
+        SCREEN.blit(shootingImage, shooting_rect)
 
 def bossGoBack():
     global boss_animation_count, bossX, bossY, bossRect, boss_going_back, attacking, animationFinished, hypoteneuse, sidekickAlive, bossLanded
-    print("beep beep")
 
     bossFlyUnsized = pygame.image.load(f"boss_idle/{boss_animation_count}.png")
     boss_animation_count += 1
@@ -872,15 +936,13 @@ def CheckBossPosition():
     global bossWidth, bossHeight, bossX, bossY, boss_pos, bossImage_rect, bossRect
     bossWidth = bossImage.get_rect().width
     bossHeight = bossImage.get_rect().height
-
-
     bossImage_rect = bossFly.get_rect()
 
 def checkIfHit():
     global bossHealth, swordRect, hit, boss_damaged, boss_pos, bossX, bossY, bossFly, bossRect, sword_swing, arrow_rect
     global is_fired, shoot_arrow, bow_shoot, allow_angle, playerHealth, playerX, playerY, playerGotHit, player_rect, boomrng_rect, boomrng_hit
-    global shieldTime, blocked, last_action_time
-
+    global shieldTime, blocked, last_action_time, bossShooting, shooting, spawn_fire, exploding
+    global swordRect, boomrng_rect
     if sword_swing and swordRect.colliderect(bossRect) and not boss_damaged:
         hit = True
 
@@ -956,6 +1018,59 @@ def checkIfHit():
 
     if not (player_rect.colliderect(bossRect)):
         playerGotHit = False
+
+    if exploding == False:
+        if arrow_rect.colliderect(fireball_rect) or swordRect.colliderect(fireball_rect) and sword_swing or boomrng_rect.colliderect(fireball_rect) or player_rect.colliderect(fireball_rect):
+            exploding = True
+
+    else:
+        fireballCollide()
+        bossShooting = False
+        shooting = True
+
+    if fireball_rect.colliderect(player_rect):
+        bossShooting = False
+        shooting = True
+        playerHealth -= 5
+        fireball_rect.center = (1000, 1000)
+
+    if fire_rect.colliderect(player_rect):
+        playerHealth -= 1
+
+def fireballCollide():
+    global explosionCount, exploding, is_fired, shoot_arrow, bow_shoot, allow_angle, boomrng_hit, hit, boomrng_rect, swordRect
+    explosionImageUnscaled = pygame.image.load(f"fireball_collide/{explosionCount}.png").convert_alpha()
+    explosionImage = pygame.transform.scale(explosionImageUnscaled, (100, 100))
+    explosionCount += 1
+    explosion_rect = explosionImage.get_rect(topleft=(fireball_rect.centerx, fireball_rect.centery))
+
+    if explosionCount == 5:
+        explosionCount = 0
+        exploding = False
+        fireball_rect.center = (-1000, -1000)
+
+        if weapon_choice == BOW:
+            is_fired = False
+            shoot_arrow = False
+            bow_shoot = False
+            allow_angle = True
+            arrow_rect.center = (10000, 1000)
+
+        elif weapon_choice == SWORD:
+            if sword_swing and hit == False and not sidekickGotHit:
+                hit = True
+            
+            else:
+                hit = False
+                swordRect.center = (1000, 1000)
+
+        else:
+            if boomrng_hit == False:
+                boomrng_hit = True
+                boomrng_rect.center = (1000, 1000)
+
+
+    SCREEN.blit(explosionImage, explosion_rect)
 
 def bossDamaged():
     global new_width, new_height, dmg_animation_count, bossDmg, boss_damaged, boss_pos
@@ -1069,6 +1184,8 @@ def drawHealthBar():
     pygame.draw.rect(SCREEN, BLACK, (570, 45, 200, 30), 4)
     text_surface = font.render("Boss Health", True, WHITE)
     SCREEN.blit(text_surface, (655, 20))
+
+    pygame.draw.rect(SCREEN, GREEN, player_rect, 3)
 
 def bossIdle():
     global new_width, new_height, boss_animation_count, bossFly, boss_damaged, boss_pos, bossX, bossY, bossImage_rect, bossRect
@@ -1242,7 +1359,6 @@ def sword_choice():
 
 def bow_choice():
     global player_rect, bow_number, bow_shoot, shoot_arrow, angle, angle_degrees, arrow_angle, allow_angle, mouse_x, mouse_y, arrow_x_speed, arrow_y_speed, is_fired, arrowX, arrowY
-
     player_pos = (playerX, playerY)
     player_rect = playerImage.get_rect(center=player_pos)
     player_rect.topleft = (playerX, playerY)
@@ -1306,9 +1422,9 @@ def bow_choice():
 
         shootArrow()
 
-    player_rect = bowImage.get_rect(center=player_rect.center)
+    bow_rect = bowImage.get_rect(center=player_rect.center)
 
-    SCREEN.blit(bowImage, player_rect.topleft)
+    SCREEN.blit(bowImage, bow_rect.topleft)
 
 def shootArrow():
     global angle_degrees, arrow_angle, mouse_x, mouse_y, arrowX, arrowY, is_fired, shoot_arrow, bow_shoot, allow_angle, arrow_rect
@@ -1331,6 +1447,7 @@ def shootArrow():
 
     else:
         SCREEN.blit(arrowImage, (arrowX - 20, arrowY))
+        #Show arrow hitbox
         #pygame.draw.rect(SCREEN, RED, arrow_rect, 5)
 
     if arrowY <= 0 or arrowY >= 800:
@@ -1348,8 +1465,7 @@ def shootArrow():
 def boomrng_choice():
     global boomrngImage, boomrng_spin, playerFlipped, boomrngImageUnrotated, boomrngX, boomrngY, mouse_x, mouse_y, allow_aim, mouse_pos, mouse_rect, player_rect, boomrng_hit, boomrng_rect
 
-    player_pos = (playerX, playerY)
-    player_rect = playerImage.get_rect(center=player_pos)
+    player_rect = playerImage.get_rect(center=(playerX + 40, playerY + 60))
     
     boomrngImageUnscaled = pygame.image.load("boomerang.png").convert_alpha()
     boomrngImageUnrotated = pygame.transform.scale(boomrngImageUnscaled, (75, 75))
@@ -1394,9 +1510,7 @@ def shootBoomrng():
 
     #pygame.draw.rect(SCREEN, GREEN, boomrng_rect, 3)
 
-    player_pos = (playerX, playerY)
-
-    player_rect = playerImage.get_rect(center=player_pos)
+    player_rect = playerImage.get_rect(center=(playerX + 40, playerY + 60))
 
     run = mouse_x - boomrngX
     rise = mouse_y - boomrngY
