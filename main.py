@@ -213,6 +213,12 @@ explosion_size = 0
 
 player_dead = False
 boss_dead = False
+playerDeathCount = 0
+gameOver = False
+
+movingYAmount = 0
+movingXAmount = 0
+closingAnimation = False
 
 fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
 fireballImageUnrotated = pygame.transform.scale(fireballImageUnsized, (100, 50))
@@ -233,65 +239,78 @@ attacking = False
 ################################################ FUNCTIONS ###################################################
 
 def startGame():
-    global attacking, current_time, animationFinished, bossHealth, boss_dead, bossRect, player_dead
+    global attacking, current_time, animationFinished, bossHealth, boss_dead, bossRect, player_dead, gameOver
     running = True
 
     while running:
-        #pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_ARROW)
-        current_time = pygame.time.get_ticks()
-        playerImage = pygame.image.load("character.png")
-        clock.tick(FPS)
-        drawGame()
-        findEvents()
-        keys = pygame.key.get_pressed()
-        handleKeys(keys)
-        checkIfJumping()
-        checkCollisions()
-        bossIdle()
-        CheckBossPosition()
-        checkForEscape(keys)
 
-        if playerHealth <= 0:
-            player_dead = True
+        if gameOver == False:
+            current_time = pygame.time.get_ticks()
+            playerImage = pygame.image.load("character.png")
+            clock.tick(FPS)
+            drawGame()
+            findEvents()
+            keys = pygame.key.get_pressed()
+            handleKeys(keys)
+            checkIfJumping()
+            checkCollisions()
+            bossIdle()
+            CheckBossPosition()
+            checkForEscape(keys)
+
+            if playerHealth <= 0:
+                gameOver = True
+
+            if bossHealth <= 0:
+                boss_dead = True
+                bossRect.center = (-1000, -1000)
+                bossStunned_rect.center = (-10000, -10000)
+                bossDeath()
+
+            if boss_going_back == True and animationFinished == True:
+                bossGoBack()
+            else:
+                bossAttack()
+
+            updateHealthBars()
+
+            if menu == True:
+                escapeMenu()
+
+            if moving_left == True:
+                leftAnimation()
+
+            elif moving_right == True:
+                rightAnimation()
+
+            if weapon_choice == SWORD:
+                sword_choice()
+
+            elif weapon_choice == BOW:
+                bow_choice()
+            
+            else:
+                boomrng_choice()
+
+            checkIfHit()
+            
+            if boss_damaged == True:
+                bossDamaged()
+
+            pygame.display.update()
+
+        else:
+            findEvents()
             playerDeath()
 
-        if bossHealth <= 0:
-            boss_dead = True
-            bossRect.center = (-1000, -1000)
-            bossStunned_rect.center = (-10000, -10000)
-            bossDeath()
+            if player_dead == True:
+                closingAnimations()
 
-        if boss_going_back == True and animationFinished == True:
-            bossGoBack()
-        else:
-              bossAttack()
+            if closingAnimation == True:
+                gameOverScreen()
 
-        updateHealthBars()
-
-        if menu == True:
-            escapeMenu()
-
-        if moving_left == True:
-            leftAnimation()
-
-        elif moving_right == True:
-            rightAnimation()
-
-        if weapon_choice == SWORD:
-            sword_choice()
-
-        elif weapon_choice == BOW:
-            bow_choice()
-        
-        else:
-            boomrng_choice()
-
-        checkIfHit()
-        
-        if boss_damaged == True:
-            bossDamaged()
-
-        pygame.display.update()
+            pygame.display.update()
+            
 
 def drawGame():
     drawBackground()
@@ -332,8 +351,52 @@ def findEvents():
                 button_clicked = True
                 weapon_choice = 1
 
+def closingAnimations():
+    global movingYAmount
+
+    if movingYAmount <= playerY - 600:
+        closeLeftVerticals()
+        return
+    
+    pygame.draw.rect(SCREEN, BLUE, (0, -600 + movingYAmount, WIDTH, 600))
+
+    movingYAmount += 20
+
+def closeLeftVerticals():
+    global movingXAmount
+
+    if movingXAmount <= playerX - 100:
+        movingXAmount = 0
+        closeRightVerticals()
+
+    pygame.draw.rect(SCREEN, BLUE, (-100 + movingXAmount, playerY, 200, playerHeight))
+    movingXAmount += 20
+
+def closeRightVerticals():
+    global movingXAmount
+    pygame.draw.rect(SCREEN, BLUE, (WIDTH, playerY, 200, playerHeight))
+
+def gameOverScreen():
+    print("you died, uh oh")
+
 def playerDeath():
-    playerDeathImage = pygame.image.load()
+    global playerDeathCount, player_dead
+
+    if player_dead:
+        return
+    
+    playerDeathImage = pygame.image.load(f"player_death/{playerDeathCount}.jpg").convert_alpha()
+    playerDeath_rect = playerDeathImage.get_rect(topleft=(playerX, 667))
+    playerDeathCount += 1
+
+    if playerDeathCount == 21:
+        playerDeathCount = 0
+        player_dead = True
+
+    if playerFlipped == True:
+        playerDeathImage = pygame.transform.flip(playerDeathImage, True, False)
+
+    SCREEN.blit(playerDeathImage, playerDeath_rect)
 
 def bossDeath():
     global explosion_size, bossDeathCount
