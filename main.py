@@ -30,6 +30,7 @@ BOW_BUTTON_COLOR = RED
 BOOMRNG_BUTTON_COLOR = RED
 GUIDE_BUTTON_COLOR = BLUE
 HOME_BUTTON_COLOR = BLUE
+leaveButton_color = BLUE
 
 leftHolding = False
 rightHolding = False
@@ -177,7 +178,7 @@ EVERYWHERE = 10
 STUNNED = 12
 
 bossFly2 = pygame.image.load("boss.png")
-bossRect2 = bossFly2.get_rect(center=(bossX + 60, bossY + 50))
+bossRect2 = bossFly2.get_rect(center=(0, 10000))
 
 attackQuantity = 0
 stunnedCount = 0
@@ -215,15 +216,33 @@ player_dead = False
 boss_dead = False
 playerDeathCount = 0
 gameOver = False
+leaveButton_width = 200
+leaveButton_height = 75
+leaveButton_x = 300
+leaveButton_y = 500
+leaveButton_textSize = 50
+leaveButton_rect = pygame.Rect(leaveButton_x, leaveButton_y, leaveButton_width, leaveButton_height)
 
 movingYAmount = 0
 movingXAmount = 0
 closingAnimation = False
+rightVertical = False
+stopRightVertical = False
+shrink_circle = True
+radiusNumber = 0
+shrinkRadius = 567    #Square root of (WIDTH ** 2 + HEIGHT ** 2) Then divided by 2
+game_screen = True
+random_text = False
+
+scroll_map = False
+map_confirmed = False
+E_clicked = False
+circleWidth = 800
 
 fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
 fireballImageUnrotated = pygame.transform.scale(fireballImageUnsized, (100, 50))
-fireball_rect = fireballImageUnrotated.get_rect(topleft=(bossX2, bossY2))
-fire_rect = fireballImageUnrotated.get_rect(topleft=(bossX2, bossY2))
+fireball_rect = fireballImageUnrotated.get_rect(topleft=(10000, 0))
+fire_rect = fireballImageUnrotated.get_rect(center=(0, 0))
 
 swordRect = swordRect = pygame.Rect(player_rect.centerx + 670, player_rect.centery - 700, 25, 10)
 
@@ -239,7 +258,7 @@ attacking = False
 ################################################ FUNCTIONS ###################################################
 
 def startGame():
-    global attacking, current_time, animationFinished, bossHealth, boss_dead, bossRect, player_dead, gameOver
+    global attacking, current_time, animationFinished, bossHealth, boss_dead, bossRect, player_dead, gameOver, playerY, playerX
     running = True
 
     while running:
@@ -259,6 +278,7 @@ def startGame():
             checkForEscape(keys)
 
             if playerHealth <= 0:
+                playerY = 667
                 gameOver = True
 
             if bossHealth <= 0:
@@ -266,6 +286,16 @@ def startGame():
                 bossRect.center = (-1000, -1000)
                 bossStunned_rect.center = (-10000, -10000)
                 bossDeath()
+                makeArrows()
+
+                if E_clicked == True:
+                    playerX = 0
+                    scrollMaps()
+
+                if scroll_map == True:
+                    playerX = 0
+                    scrollMaps()
+
 
             if boss_going_back == True and animationFinished == True:
                 bossGoBack()
@@ -310,7 +340,103 @@ def startGame():
                 gameOverScreen()
 
             pygame.display.update()
-            
+
+
+def makeArrows():
+    global radius, E_clicked, grow_circle
+    pygame.draw.line(SCREEN, BLUE, (WIDTH - 40, 700), (WIDTH - 80, 660), 4)
+    line_rect = pygame.draw.line(SCREEN, BLUE, (WIDTH - 40, 700), (WIDTH - 80, 740), 4)
+
+    if player_rect.colliderect(line_rect):
+        sign_text = "Press 'E' to interact!"
+        sign_font = pygame.font.SysFont("Comic Sans MS", 20)
+
+        sign_surface = sign_font.render(sign_text, True, BLACK)
+        sign_rect = sign_surface.get_rect(center=(WIDTH - 130, 550))
+
+        SCREEN.blit(sign_surface, sign_rect)
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_e]:
+            grow_circle = True
+            radius = 0
+            while grow_circle == True:
+                growCircle()
+                pygame.display.update()
+
+            E_clicked = True
+
+    pygame.display.update()
+
+def scrollMaps():
+    global playerY, ground_y
+    map_scroll = True
+    while map_scroll == True:
+        clock.tick(FPS)
+        findEvents()
+        drawMap()
+        drawPlayer()
+        keys = pygame.key.get_pressed()
+        checkKeysMap(keys)
+        checkIfJumping()
+        playerY = 600
+
+        if moving_left == True:
+            leftAnimation()
+
+        elif moving_right == True:
+            rightAnimation()
+
+        pygame.display.update()
+
+def checkKeysMap(keys):
+    global playerFlipped, playerX, moving_left, moving_right, playerAnimation
+    if keys[pygame.K_a] or keys[pygame.K_LEFT]:
+        playerX -= playerSpeed
+        playerFlipped = True
+        moving_left = True
+
+    else:
+        moving_left = False
+        playerAnimation = False
+
+    if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+        playerX += playerSpeed
+        playerFlipped = False
+        moving_right = True
+    
+    else:
+        moving_right = False
+        playerAnimation = False
+    
+    if keys[pygame.K_w] or keys[pygame.K_UP]:
+        playerJump()
+
+def drawPlayer():
+    global playerImage, playerX, playerY, playerRun
+
+    if playerAnimation == False:
+        if playerFlipped == False:
+            SCREEN.blit(playerImage, (playerX, playerY))
+
+        else:
+            flippedPlayerImage = pygame.transform.flip(playerImage, True, False)
+            SCREEN.blit(flippedPlayerImage, (playerX, playerY))
+
+    else:
+        SCREEN.blit(playerRun, (playerX, playerY))
+
+def drawMap():
+    global map_confirmed, map_choice, mapImage, map_rect
+    if map_confirmed == False:
+        maps = ["grass", "forest", "desert"]
+        map_choice = random.choice(maps)
+        map_confirmed = True
+        mapImageUnsized = pygame.image.load(f"{map_choice}.jpg").convert_alpha()
+        mapImage = pygame.transform.scale(mapImageUnsized, (1250, 800))
+        map_rect = mapImage.get_rect(topleft=(0, 0))
+
+    SCREEN.blit(mapImage, map_rect)
 
 def drawGame():
     drawBackground()
@@ -354,42 +480,171 @@ def findEvents():
 def closingAnimations():
     global movingYAmount
 
-    if movingYAmount <= playerY - 600:
+    if movingYAmount >= 670:
         closeLeftVerticals()
         return
     
-    pygame.draw.rect(SCREEN, BLUE, (0, -600 + movingYAmount, WIDTH, 600))
+    pygame.draw.rect(SCREEN, BLUE, (0, -650 + movingYAmount, WIDTH, 670))
 
-    movingYAmount += 20
+    movingYAmount += 1
 
 def closeLeftVerticals():
-    global movingXAmount
+    global movingXAmount, rightVertical
 
-    if movingXAmount <= playerX - 100:
-        movingXAmount = 0
+    if movingXAmount >= playerX - 100 or rightVertical == True:
+        if rightVertical == False:
+            movingXAmount = 0
+            rightVertical = True
+
         closeRightVerticals()
+        return
 
-    pygame.draw.rect(SCREEN, BLUE, (-100 + movingXAmount, playerY, 200, playerHeight))
-    movingXAmount += 20
+    pygame.draw.rect(SCREEN, BLUE, (-100 + movingXAmount, playerY, 200, playerHeight + 50))
+    movingXAmount += 1
 
 def closeRightVerticals():
-    global movingXAmount
-    pygame.draw.rect(SCREEN, BLUE, (WIDTH, playerY, 200, playerHeight))
+    global movingXAmount, stopRightVertical, closingAnimation
+
+    if WIDTH - movingXAmount <= playerX + playerWidth + 50:
+        stopRightVertical = True
+        closingAnimation = True
+
+    if stopRightVertical == False:
+        pygame.draw.rect(SCREEN, BLUE, (WIDTH - movingXAmount, playerY, 300, playerHeight))
+        movingXAmount += 1
 
 def gameOverScreen():
-    print("you died, uh oh")
+    global shrink_circle, game_screen
+    while shrink_circle == True:
+        clock.tick(FPS)
+        findEvents()
+        shrinkCircle()
+
+    while game_screen == True:
+        clock.tick(FPS)
+        findEvents()
+        printGameScreenText()
+        createLeaveButton()
+        checkClickedButton()
+
+def checkClickedButton():
+    global leaveButton_color, leaveButton_rect
+    events = pygame.event.get()
+    for event in events:
+        if event.type == pygame.MOUSEBUTTONDOWN and leaveButton_rect.collidepoint(mouse_pos):
+            leaveButton_color = BUTTON_CLICK_COLOR
+            pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_ARROW)
+            quitGame()
+
+
+def createLeaveButton():
+    global leaveButton_color, leaveButton_width, leaveButton_height, leaveButton_x, leaveButton_y, leaveButton_textSize, leaveButton_rect
+    leaveButton_rect = pygame.Rect(leaveButton_x, leaveButton_y, leaveButton_width, leaveButton_height)
+    leaveButton_text = "LEAVE"
+    leaveButton_font = pygame.font.SysFont("Comic Sans MS", leaveButton_textSize)
+    drawButton(leaveButton_rect, leaveButton_color, leaveButton_text, leaveButton_font, SCREEN)
+
+    mouse_pos = pygame.mouse.get_pos()
+    if leaveButton_rect.collidepoint(mouse_pos):
+        leaveButton_color = BUTTON_HOVER_COLOR
+        leaveButton_width = 237
+        leaveButton_height = 112
+        leaveButton_x = 275
+        leaveButton_y = 475
+        leaveButton_textSize = 70
+        pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_HAND)
+    
+    else:
+        leaveButton_color = BLUE
+        leaveButton_width = 200
+        leaveButton_height = 75
+        leaveButton_x = 300
+        leaveButton_y = 500
+        leaveButton_textSize = 50
+        pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_ARROW)
+
+    pygame.display.update()
+
+def printGameScreenText():
+    global random_text, description_text2
+    title_font = pygame.font.SysFont("Georgia", 100)
+    description_font = pygame.font.SysFont("Comic Sans MS", 20)
+
+    SCREEN.fill(BLACK)
+
+    title_text = "GAME OVER"
+    title_text_surface = title_font.render(title_text, True, WHITE)
+    title_text_rect = title_text_surface.get_rect(center=(400, 80))
+
+    description_text = "You failed to defeat the dragons..."
+    randomText = random.randint(1, 5)
+
+    if random_text == False:
+        if randomText == 1:
+            description_text2 = "Maybe this job is for someone else."
+            random_text = True
+        
+        elif randomText == 2:
+            description_text2 = "We should've called for help when we could."
+            random_text = True
+
+        elif randomText == 3:
+            description_text2 = "The dragons will now be able to reproduce even more."
+            random_text = True
+
+        elif randomText == 4:
+            description_text2 = "Maybe choosing another weapon could have helped."
+            random_text = True
+        
+        else:
+            description_text2 = "It is what it is."
+            random_text = True
+
+    description_text3 = "The question is WHO released them.."
+
+    description_text_surface = description_font.render(description_text, True, WHITE)
+    description_text_rect = description_text_surface.get_rect(center=(400, 200))
+
+    description_text2_surface = description_font.render(description_text2, True, WHITE)
+    description_text2_rect = description_text2_surface.get_rect(center=(400, 230))
+
+    description_text3_surface = description_font.render(description_text3, True, WHITE)
+    description_text3_rect = description_text3_surface.get_rect(center=(400, 260))
+
+    SCREEN.blit(description_text3_surface, description_text3_rect)
+    SCREEN.blit(description_text2_surface, description_text2_rect)
+    SCREEN.blit(description_text_surface, description_text_rect)
+    SCREEN.blit(title_text_surface, title_text_rect)
+
+    pygame.display.update()
+
+def shrinkCircle():
+    global radiusNumber, shrinkRadius, shrink_circle
+
+    pygame.draw.circle(SCREEN, BLACK, player_rect.center, shrinkRadius + 1000, 800)
+
+    radiusNumber += 0.5
+    shrinkRadius -= radiusNumber
+
+    if shrinkRadius + 1000 <= 0:
+        shrink_circle = False
+        return
+
+    pygame.display.update()
 
 def playerDeath():
     global playerDeathCount, player_dead
 
     if player_dead:
         return
+
+    SCREEN.fill(BLACK)
     
-    playerDeathImage = pygame.image.load(f"player_death/{playerDeathCount}.jpg").convert_alpha()
-    playerDeath_rect = playerDeathImage.get_rect(topleft=(playerX, 667))
+    playerDeathImage = pygame.image.load(f"player_death/{playerDeathCount}.png").convert_alpha()
+    playerDeath_rect = playerDeathImage.get_rect(topleft=(playerX, 650))
     playerDeathCount += 1
 
-    if playerDeathCount == 21:
+    if playerDeathCount == 41:
         playerDeathCount = 0
         player_dead = True
 
@@ -504,6 +759,7 @@ def bossAttackLeft():
     bossRect = bossFly.get_rect(topleft=(bossX, bossY))
 
     if bossLanded == False:
+        bossX2 = 0
 
         left_surf = pygame.Surface((50, 50))
         left_rect = left_surf.get_rect(topleft=(120, 160))
@@ -664,22 +920,19 @@ def shootFireball():
     fireballImage = pygame.transform.rotate(fireballImageUnrotated, fireball_angle + 180)
     rotated_rect = fireballImage.get_rect(center=fireball_rect.center)
 
-    if not SCREEN.get_rect().colliderect(fireball_rect):
+    if fireball_rect.centery >= 770:
         last_action_time = fireCooldown
         fireCooldown = 0
-        if fireball_rect.centerx > 750:
-            fireX = 700
-            fireY = 0
-        
-        elif fireball_rect.centerx < 0:
-            fireX = 10
-            fireY = 0
-            
-        else:
-            fireX = fireball_rect.centerx
-            fireY = fireball_rect.centery
+        fireX = fireball_rect.centerx
 
+        fireY = 850
         spawn_fire = True
+        last_action_time = pygame.time.get_ticks()
+        bossShooting = False
+        shooting = True
+        fireball_rect.center = (1000, 1000)
+
+    if fireball_rect.centerx >= 800 or fireball_rect.centerx <= 0:
         bossShooting = False
         shooting = True
         fireball_rect.center = (1000, 1000)
@@ -687,7 +940,8 @@ def shootFireball():
     SCREEN.blit(fireballImage, rotated_rect)
 
 def createFire():
-    global fireCount, spawn_fire, fireCooldown, fire_rect
+    global fireCount, spawn_fire, fireCooldown, fire_rect, fireX, fireY, last_action_time
+    #if fireCooldown == 0 and spawn_fire:
     fireCooldown = pygame.time.get_ticks()
     fireImageUnsized = pygame.image.load(f"fire/{fireCount}.png").convert_alpha()
     fireImage = pygame.transform.scale(fireImageUnsized, (100, 100))
@@ -697,12 +951,12 @@ def createFire():
     if fireCount == 7:
         fireCount = 0
 
-    if fireCooldown - last_action_time <= 3000:
+    if fireCooldown - last_action_time <= 2000:
         SCREEN.blit(fireImage, fire_rect)
     
     else:
+        fireCooldown = 0
         spawn_fire = False
-
         fire_rect.center = (1000, 1000)
 
 def sidekickShoot():
@@ -859,15 +1113,15 @@ def handleKeys(keys):
     moving_left = False
     moving_right = False
 
-    if keys[pygame.K_a]:
+    if keys[pygame.K_a] or keys[pygame.K_LEFT]:
         playerX -= playerSpeed
         moving_left = True
 
-    if keys[pygame.K_d]:
+    if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
         playerX += playerSpeed
         moving_right = True
 
-    if keys[pygame.K_w]:
+    if keys[pygame.K_w] or keys[pygame.K_UP]:
         playerJump()
 
     if keys[pygame.K_ESCAPE] and escape_holding == False:
@@ -885,6 +1139,12 @@ def handleKeys(keys):
 
     if not (keys[pygame.K_a] and keys[pygame.K_d]):
       playerAnimation = False
+
+    elif not (keys[pygame.K_a] and keys[pygame.K_RIGHT]):
+        playerAnimation = False
+    
+    elif not(keys[pygame.K_d] and keys[pygame.K_LEFT]):
+        playerAnimation = False
 
 def checkForEscape(keys):
     global menu, escape_holding, guide_clicked
@@ -1107,7 +1367,7 @@ def checkIfHit():
 
                 if attacking == False:
                      boss_damaged = True
-                     bossHealth -= 10
+                     bossHealth -= 100
                      print(bossHealth)
 
                 else:
@@ -1150,19 +1410,17 @@ def checkIfHit():
         if arrow_rect.colliderect(fireball_rect) or swordRect.colliderect(fireball_rect) and sword_swing or boomrng_rect.colliderect(fireball_rect) or player_rect.colliderect(fireball_rect):
             exploding = True
 
+        if fireball_rect.colliderect(player_rect):
+            playerHealth -= 5
+            exploding = True
     else:
         fireballCollide()
         bossShooting = False
         shooting = True
 
-    if fireball_rect.colliderect(player_rect):
-        bossShooting = False
-        shooting = True
-        playerHealth -= 5
-        fireball_rect.center = (1000, 1000)
 
     if fire_rect.colliderect(player_rect):
-        playerHealth -= 1
+        playerHealth -= 0.5
 
 def fireballCollide():
     global explosionCount, exploding, is_fired, shoot_arrow, bow_shoot, allow_angle, boomrng_hit, hit, boomrng_rect, swordRect
@@ -1171,16 +1429,18 @@ def fireballCollide():
     explosionCount += 1
     explosion_rect = explosionImage.get_rect(topleft=(fireball_rect.centerx, fireball_rect.centery))
 
+    if weapon_choice == BOW:
+        is_fired = False
+        shoot_arrow = False
+        bow_shoot = False
+        allow_angle = True
+
     if explosionCount == 5:
         explosionCount = 0
         exploding = False
         fireball_rect.center = (-1000, -1000)
 
         if weapon_choice == BOW:
-            is_fired = False
-            shoot_arrow = False
-            bow_shoot = False
-            allow_angle = True
             arrow_rect.center = (10000, 1000)
 
         elif weapon_choice == SWORD:
@@ -1193,7 +1453,6 @@ def fireballCollide():
 
         else:
             if boomrng_hit == False:
-                boomrng_hit = True
                 boomrng_rect.center = (1000, 1000)
 
 
@@ -1248,8 +1507,6 @@ def leftAnimation():
     if animation_count > 7:
         animation_count = 0
 
-    playerFlipped = True
-
 def rightAnimation():
     global animation_count, playerImage, playerAnimation, playerRun, playerFlipped
 
@@ -1261,8 +1518,6 @@ def rightAnimation():
 
     if animation_count > 7:
         animation_count = 0
-
-    playerFlipped = False
 
 
 def playerJump():
@@ -1307,7 +1562,8 @@ def drawHealthBar():
     text_surface = font.render("Your Health", True, WHITE)
     SCREEN.blit(text_surface, (33, 20))
 
-    pygame.draw.rect(SCREEN, RED, (570, 45, 200, 30)) 
+    if boss_dead == False:
+        pygame.draw.rect(SCREEN, RED, (570, 45, 200, 30)) 
     pygame.draw.rect(SCREEN, BLACK, (570, 45, 200, 30), 4)
     text_surface = font.render("Boss Health", True, WHITE)
     SCREEN.blit(text_surface, (655, 20))
@@ -1700,6 +1956,7 @@ def growCircle():
     if radius == 600:
         choose_weapon = True
         grow_circle = False
+        return
 
 def quitGame():
     pygame.quit()
