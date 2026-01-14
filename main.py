@@ -1600,7 +1600,6 @@ def checkIfHit():
     if hit == True:
         bossHealth -= 5
         boss_damaged = True
-        print(bossHealth)
 
     if weapon_choice == BOW:
         if arrow_rect.colliderect(bossRect):
@@ -1613,7 +1612,6 @@ def checkIfHit():
             if attacking == False:
                 bossHealth -= 7
                 boss_damaged = True
-                print(bossHealth)
             
             else:
                 blocked = True
@@ -1629,7 +1627,6 @@ def checkIfHit():
                 if attacking == False:
                      boss_damaged = True
                      bossHealth -= 100
-                     print(bossHealth)
 
                 else:
                     blocked = True
@@ -1653,7 +1650,6 @@ def checkIfHit():
             playerY -= 100
             playerGotHit = True
             playerHealth -= 10
-            print(playerHealth)
         
         if sidekickAlive and player_rect.colliderect(bossRect2):
               playerX += 200
