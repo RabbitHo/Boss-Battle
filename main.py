@@ -14,6 +14,7 @@ HEIGHT = 800
 FPS = 30
 
 BLUE = (0, 0, 255)
+LIGHTBLUE = (111, 150, 247)
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
@@ -236,8 +237,22 @@ random_text = False
 
 scroll_map = False
 map_confirmed = False
+second_map_confirmed = False
+third_map_confirmed = False
 E_clicked = False
 circleWidth = 800
+screenX = 0
+screenLimitLeft = False
+screenLimitRight = False
+civilianIdleCount = 0
+civilian_interact = False
+interaction_next = 0
+civilian_running = False
+civilianRunCount = 0
+civilianX = 600
+space_holding = False
+endOfGame = False
+player_run = True
 
 fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
 fireballImageUnrotated = pygame.transform.scale(fireballImageUnsized, (100, 50))
@@ -341,11 +356,10 @@ def startGame():
 
             pygame.display.update()
 
-
 def makeArrows():
-    global radius, E_clicked, grow_circle
-    pygame.draw.line(SCREEN, BLUE, (WIDTH - 40, 700), (WIDTH - 80, 660), 4)
-    line_rect = pygame.draw.line(SCREEN, BLUE, (WIDTH - 40, 700), (WIDTH - 80, 740), 4)
+    global radius, E_clicked, grow_circle, sign_font
+    pygame.draw.line(SCREEN, BLUE, (WIDTH - 40, 700), (WIDTH - 80, 660), 8)
+    line_rect = pygame.draw.line(SCREEN, BLUE, (WIDTH - 40, 700), (WIDTH - 80, 740), 8)
 
     if player_rect.colliderect(line_rect):
         sign_text = "Press 'E' to interact!"
@@ -369,7 +383,8 @@ def makeArrows():
     pygame.display.update()
 
 def scrollMaps():
-    global playerY, ground_y
+    global playerY, ground_y, playerFlipped, endOfGame, shrink_circle, radiusNumber, moving_left, moving_right
+    global endOfGame, civilian_run
     map_scroll = True
     while map_scroll == True:
         clock.tick(FPS)
@@ -377,9 +392,27 @@ def scrollMaps():
         drawMap()
         drawPlayer()
         keys = pygame.key.get_pressed()
-        checkKeysMap(keys)
-        checkIfJumping()
-        playerY = 600
+        if civilian_interact == False and endOfGame == False:
+            checkKeysMap(keys)
+            checkIfJumping()
+            shrink_circle = True
+            radiusNumber = 0
+        else:
+            moving_left = False
+            moving_right = False
+            playerFlipped = False
+            player_rect.topleft = (playerX, playerY)
+            civilianInteraction()
+
+        if endOfGame == True and civilian_run == False:
+            while shrink_circle == True:
+                clock.tick(FPS)
+                findEvents()
+                shrinkCircle()
+            drawEnding()
+        screenScroll()
+        createCivilian()
+        playerY = 550
 
         if moving_left == True:
             leftAnimation()
@@ -389,9 +422,134 @@ def scrollMaps():
 
         pygame.display.update()
 
+def drawEnding():
+    SCREEN.fill(LIGHTBLUE)
+    ending_title_font = pygame.font.SysFont("Georgia", 100)
+    ending_title_text = "GAME OVER"
+    ending_title_surface = ending_title_font.render(ending_title_text, True, BLACK)
+    ending_title_rect = ending_title_surface.get_rect(center=(400, 50))
+
+    subtitle_font = pygame.font.SysFont("Georgia", 40)
+    subtitle_text = "YOU WIN!"
+    subtitle_surface = subtitle_font.render(subtitle_text, True, BLACK)
+    subtitle_rect = subtitle_surface.get_rect(center=(400, 120))
+
+    story_text = "Storyline"
+    story_surface = subtitle_font.render(story_text, True, BLACK)
+    story_rect = story_surface.get_rect(topleft=(50, 200))
+
+    body_font = pygame.font.SysFont("Comic Sans MS", 20)
+    body_text1 = "Defeating very few dragons actually won't defeat all of them."
+    body_text2 = "However, you managed to defeat the queen dragon which stops the reproduction!"
+    body_text3 = "The rest of the dragons can now be handled from other sorcerers."
+    body_text4 = "Studies say that this queen dragon has lived for the whole hundred years!"
+    body_text5 = "This would mean that there is only one female dragon and you,"
+    body_text6 = "have defeated the one and only."
+    body_text7 = "You saved the world from chaos and destruction!"
+    body_text8 = "Congratulations!"
+
+    body_text_surface = body_font.render(body_text1, True, BLACK)
+    body_text_rect = body_text_surface.get_rect(topleft=(30, 250))
+
+    body_text_surface2 = body_font.render(body_text2, True, BLACK)
+    body_text_rect2 = body_text_surface2.get_rect(topleft=(30, 270))
+
+    body_text_surface3 = body_font.render(body_text3, True, BLACK)
+    body_text_rect3 = body_text_surface3.get_rect(topleft=(30, 290))
+
+    body_text_surface4 = body_font.render(body_text4, True, BLACK)
+    body_text_rect4 = body_text_surface4.get_rect(topleft=(30, 310))
+
+    body_text_surface5 = body_font.render(body_text5, True, BLACK)
+    body_text_rect5 = body_text_surface5.get_rect(topleft=(30, 330))
+
+    body_text_surface6 = body_font.render(body_text6, True, BLACK)
+    body_text_rect6 = body_text_surface6.get_rect(topleft=(30, 350))
+
+    body_text_surface7 = body_font.render(body_text7, True, BLACK)
+    body_text_rect7 = body_text_surface7.get_rect(topleft=(30, 370))
+
+    body_text_surface8 = body_font.render(body_text8, True, BLACK)
+    body_text_rect8 = body_text_surface8.get_rect(topleft=(30, 390))
+
+    SCREEN.blit(body_text_surface, body_text_rect)
+    SCREEN.blit(body_text_surface2, body_text_rect2)
+    SCREEN.blit(body_text_surface3, body_text_rect3)
+    SCREEN.blit(body_text_surface4, body_text_rect4)
+    SCREEN.blit(body_text_surface5, body_text_rect5)
+    SCREEN.blit(body_text_surface6, body_text_rect6)
+    SCREEN.blit(body_text_surface7, body_text_rect7)
+    SCREEN.blit(body_text_surface8, body_text_rect8)
+    SCREEN.blit(story_surface, story_rect)
+    SCREEN.blit(subtitle_surface, subtitle_rect)
+    SCREEN.blit(ending_title_surface, ending_title_rect)
+
+def createCivilian():
+    global civilianIdleCount, civilian_rect, civilian_running, endOfGame
+    civilianImage = pygame.image.load(f"civilian_idle/{civilianIdleCount}.png").convert_alpha()
+    civilian_rect = civilianImage.get_rect(center=(screenX + secondMapWidth + mapWidth + 600, 600))
+    civilianIdleCount += 1
+
+    #Draw civilian hitbox
+    #pygame.draw.rect(SCREEN, GREEN, civilian_rect, 3)
+
+    if playerX < civilian_rect.centerx:
+        civilianImage = pygame.transform.flip(civilianImage, True, False)
+
+    if civilianIdleCount == 17:
+        civilianIdleCount = 0
+
+    if player_rect.colliderect(civilian_rect):
+        if civilian_interact == False and endOfGame == False:
+            interact_text = "Press 'E' to interact!"
+
+            interact_surface = sign_font.render(interact_text, True, BLACK)
+            interact_rect = interact_surface.get_rect(center=(playerX + 20, playerY - 50))
+
+            SCREEN.blit(interact_surface, interact_rect)
+        
+        elif civilian_interact == True:
+            interact_text = "Press 'SPACE' to go next!"
+
+            interact_surface = sign_font.render(interact_text, True, BLACK)
+            interact_rect = interact_surface.get_rect(center=(playerX + 20, playerY - 50))
+
+            SCREEN.blit(interact_surface, interact_rect)
+
+    if civilian_running == False:
+        SCREEN.blit(civilianImage, civilian_rect)
+
+def screenScroll():
+    global screenX, playerX, map_rect, screenLimitLeft, secondMap_rect, thirdMap_rect, screenLimitRight
+    if playerX >= 600 and moving_right and not moving_left and not screenLimitRight:
+        playerX = 600
+        screenX -= 25
+        screenLimitLeft = False
+    
+    if playerX <= 200 and moving_left and not moving_right and not screenLimitLeft:
+        playerX = 200
+        screenX += 5
+        screenLimitRight = False
+    
+    if playerX <= 3:
+        playerX = 3
+    
+    if playerX >= 720:
+        playerX = 720
+
+    if map_rect.topleft == (0, 0):
+        screenLimitLeft = True
+
+    if thirdMap_rect.topleft <= (0, 0):
+        screenLimitRight = True
+
+    map_rect = mapImage.get_rect(topleft=(screenX, 0))
+    secondMap_rect = secondMap.get_rect(topleft=(screenX + mapWidth, 0))
+    thirdMap_rect = thirdMap.get_rect(topleft=(screenX + secondMapWidth + mapWidth, 0))
+
 def checkKeysMap(keys):
-    global playerFlipped, playerX, moving_left, moving_right, playerAnimation
-    if keys[pygame.K_a] or keys[pygame.K_LEFT]:
+    global playerFlipped, playerX, moving_left, moving_right, playerAnimation, civilian_interact
+    if keys[pygame.K_a] or keys[pygame.K_LEFT] and civilian_interact == False:
         playerX -= playerSpeed
         playerFlipped = True
         moving_left = True
@@ -400,7 +558,7 @@ def checkKeysMap(keys):
         moving_left = False
         playerAnimation = False
 
-    if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+    if keys[pygame.K_d] or keys[pygame.K_RIGHT] and civilian_interact == False:
         playerX += playerSpeed
         playerFlipped = False
         moving_right = True
@@ -411,6 +569,68 @@ def checkKeysMap(keys):
     
     if keys[pygame.K_w] or keys[pygame.K_UP]:
         playerJump()
+
+    if keys[pygame.K_e]:
+        if player_rect.colliderect(civilian_rect):
+            civilian_interact = True
+
+def civilianInteraction():
+    global civilian_running, interaction_next, space_holding, civilian_interact, endOfGame
+    if civilian_running == False:
+        pygame.draw.rect(SCREEN, BLACK, (50, 100, 720, 100))
+        pygame.draw.rect(SCREEN, WHITE, (50, 100, 720, 100), 10)
+    interact_font = pygame.font.SysFont("Georgia", 20)
+    interact_text1 = "<Civilian> You really beat the dragons? That's really great! It's finally done!"
+    interact_text2 = "<Civilian> I'll go tell the others about this. Thank you!"
+    interact_text3 = "<Civilian> I'll say it again. Thank you so much! You saved the world!"
+
+    interact1_surface = interact_font.render(interact_text1, True, WHITE)
+    interact1_rect = interact1_surface.get_rect(topleft=(70, 140))
+
+    interact2_surface = interact_font.render(interact_text2, True, WHITE)
+    interact2_rect = interact2_surface.get_rect(topleft=(70, 140))
+
+    interact3_surface = interact_font.render(interact_text3, True, WHITE)
+    interact3_rect = interact3_surface.get_rect(topleft=(70, 140))
+
+    if interaction_next == 0:
+        SCREEN.blit(interact1_surface, interact1_rect)
+    
+    elif interaction_next == 1:
+        SCREEN.blit(interact2_surface, interact2_rect)
+    
+    elif interaction_next == 2:
+        SCREEN.blit(interact3_surface, interact3_rect)
+    
+    else:
+        civilian_running = True
+        civilian_interact = False
+        endOfGame = True
+        civilianRun()
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_SPACE] and space_holding == False:
+        space_holding = True
+        interaction_next += 1
+
+    if not keys[pygame.K_SPACE]:
+        space_holding = False
+
+def civilianRun():
+    global civilianRunCount, civilianX, endOfGame, civilian_interact, civilian_run
+    civilianImage = pygame.image.load(f"civilian_walking/{civilianRunCount}.png").convert_alpha()
+    civilianRunCount += 1
+    civilian_rect = civilianImage.get_rect(center=(screenX + secondMapWidth + mapWidth + civilianX, 600))
+    civilianX += 4
+    civilian_run = True
+
+    if civilianRunCount == 24:
+        civilianRunCount = 0
+
+    if civilian_rect.centerx >= 800:
+        civilian_run = False
+    else:
+        SCREEN.blit(civilianImage, civilian_rect)
 
 def drawPlayer():
     global playerImage, playerX, playerY, playerRun
@@ -425,17 +645,53 @@ def drawPlayer():
 
     else:
         SCREEN.blit(playerRun, (playerX, playerY))
+    
+    if civilian_interact == True:
+        SCREEN.blit(playerImage, (playerX, playerY))
+
+    player_rect.topleft = (playerX + 50, playerY)
 
 def drawMap():
-    global map_confirmed, map_choice, mapImage, map_rect
+    global map_confirmed, map_choice, mapImage, map_rect, screenX, mapWidth, second_map_confirmed, secondMap, secondMap_rect, second_map_choice
+    global secondMapWidth, thirdMap, third_map_confirmed, thirdMap_rect
     if map_confirmed == False:
         maps = ["grass", "forest", "desert"]
         map_choice = random.choice(maps)
         map_confirmed = True
+    
         mapImageUnsized = pygame.image.load(f"{map_choice}.jpg").convert_alpha()
         mapImage = pygame.transform.scale(mapImageUnsized, (1250, 800))
-        map_rect = mapImage.get_rect(topleft=(0, 0))
+        map_rect = mapImage.get_rect(topleft=(screenX, 0))
+        mapWidth = mapImage.get_rect().width
 
+    if second_map_confirmed == False:
+        secondMaps = ["grass", "forest", "desert"]
+        second_map_choice = random.choice(secondMaps)
+        while second_map_choice == map_choice:
+            secondMaps = ["grass", "forest", "desert"]
+            second_map_choice = random.choice(secondMaps)
+
+        second_map_confirmed = True
+
+        secondMapUnsized = pygame.image.load(f"{second_map_choice}.jpg").convert_alpha()
+        secondMap = pygame.transform.scale(secondMapUnsized, (1250, 800))
+        secondMap_rect = secondMap.get_rect(topleft=(screenX + mapWidth, 0))
+        secondMapWidth = secondMap.get_rect().width
+
+    if third_map_confirmed == False:
+        thirdMaps = ["grass", "forest", "desert"]
+        third_map_choice = random.choice(thirdMaps)
+        while third_map_choice == second_map_choice:
+            thirdMaps = ["grass", "forest", "desert"]
+            third_map_choice = random.choice(thirdMaps)
+
+        third_map_confirmed = True
+        thirdMapUnsized = pygame.image.load(f"{third_map_choice}.jpg").convert_alpha()
+        thirdMap = pygame.transform.scale(thirdMapUnsized, (1250, 800))
+        thirdMap_rect = thirdMap.get_rect(topleft=(screenX + secondMapWidth + mapWidth, 0))
+    
+    SCREEN.blit(thirdMap, thirdMap_rect)
+    SCREEN.blit(secondMap, secondMap_rect)
     SCREEN.blit(mapImage, map_rect)
 
 def drawGame():
@@ -621,7 +877,11 @@ def printGameScreenText():
 def shrinkCircle():
     global radiusNumber, shrinkRadius, shrink_circle
 
-    pygame.draw.circle(SCREEN, BLACK, player_rect.center, shrinkRadius + 1000, 800)
+    if endOfGame == False:
+        pygame.draw.circle(SCREEN, BLACK, player_rect.center, shrinkRadius + 1000, 800)
+
+    else:
+        pygame.draw.circle(SCREEN, LIGHTBLUE, player_rect.center, shrinkRadius + 1000, 800)
 
     radiusNumber += 0.5
     shrinkRadius -= radiusNumber
@@ -682,6 +942,7 @@ def bossAttack():
 
     if sidekickHealth <= 0:
        sidekickAlive = False
+       fire_rect.center = (10000, 400)
        sidekickDeath()
        return
     
