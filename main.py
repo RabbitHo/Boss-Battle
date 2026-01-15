@@ -276,6 +276,11 @@ revert_explosion = False
 stopExplosion = False
 bigFireball_rect = pygame.Rect(0, 0, 0, 0)
 fire_animation_count = 0
+idleCount = 0
+platformX = 0
+on_platform = False
+platform_rect = pygame.Rect(0, 0, 0, 0)
+bigFireball_rect = pygame.Rect(0, 0, 0, 0)
 
 swordRect = swordRect = pygame.Rect(player_rect.centerx + 670, player_rect.centery - 700, 25, 10)
 
@@ -1039,7 +1044,7 @@ def bossAttack():
     if attacking == False and boss_dead == False:
         last_fireball = fireballCooldown
         last_action_time = current_time
-        attackChoice = random.randint(1, 4)
+        attackChoice = random.randint(1, 6)
         if attackQuantity == 0:
             attacking = True
         
@@ -1332,29 +1337,30 @@ def sidekickShoot():
 
 def bossGoBack():
     global boss_animation_count, bossX, bossY, bossRect, boss_going_back, attacking, animationFinished, hypoteneuse, sidekickAlive, bossLanded
-    global revert_explosion, stopExplosion, bigFireball_rect, fireball_shoot, shoot_number, attackQuantity, bigFireballY
+    global revert_explosion, stopExplosion, bigFireball_rect, fireball_shoot, shoot_number, attackQuantity, bigFireballY, fireCooldown, fireball_rect
 
     bossFlyUnsized = pygame.image.load(f"boss_idle/{boss_animation_count}.png")
     boss_animation_count += 1
     bossFly = pygame.transform.scale(bossFlyUnsized, (new_width, new_height))
-
+    bossRect.topleft = (bossX, bossY)
     if boss_animation_count == 12:
         boss_animation_count = 0
 
     backX = 350
     backY = 400
-
     bossX, bossY, hypoteneuse = findHypoteneuse(backX, backY, bossX, bossY, hypoteneuse, boss_speed)
 
-    if round(hypoteneuse) <= 20:
+    if hypoteneuse <= boss_speed:
         if attackChoice <= ATTACKLEFT:
             boss_going_back = False
             attacking = False
             animationFinished = False
             sidekickAlive = True
             bossLanded = False
+            fireCooldown = 5000
+            fireball_rect.center = (1000, 1000)
 
-        elif attackChoice >= ATTACKUP and attackChoice < ATTACKDOWN:
+        if attackChoice <= ATTACKUP and attackChoice > ATTACKLEFT:
             attacking = False
             boss_going_back = False
             bossLanded = False
@@ -1365,9 +1371,13 @@ def bossGoBack():
             shoot_number = 0
             attackQuantity += 1
             bigFireballY = 0
+    
+        if attackChoice <= ATTACKRIGHT and attackChoice > ATTACKUP:
+            attacking = False
+            boss_going_back = False
+            bossLanded = False
+            attackQuantity += 1
 
-
-    bossRect.topleft = (bossX, bossY)
     if boss_dead == False:
         SCREEN.blit(bossFly, bossRect)
     
@@ -1388,9 +1398,6 @@ def findHypoteneuse(targetX, targetY, userX, userY, hypoteneuse, speed):
 
     return userX, userY, hypoteneuse
 
-def bossAttackRight():
-    print("He attacked right...")
-
 def bossAttackUp():
     global boss_animation_count, bossX, bossY, fireball_shoot, fireballMovement, bossLanded, bossShootCount, shoot_number, bossRect, shoot_spot
     global bigFireballY, bigFireballX, bigExplosionCount, bigExplosionSize, stopExplosion, revert_explosion, boss_going_back, playerX, playerY, playerHealth
@@ -1400,7 +1407,7 @@ def bossAttackUp():
     boss_animation_count += 1
     bossFly = pygame.transform.scale(bossFlyUnsized, (new_width, new_height))
     bossRect = bossFly.get_rect(topleft=(bossX, bossY))
-    if shoot_number == 6:
+    if shoot_number == 4:
         fireball_shoot = True
 
     if boss_animation_count == 12:
@@ -1446,7 +1453,7 @@ def bossAttackUp():
         SCREEN.blit(shootingImage, shooting_rect)
 
     if fireball_shoot == True:
-        if shoot_number <= 5:
+        if shoot_number <= 3:
             fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
             fireballImageUnrotated = pygame.transform.scale(fireballImageUnsized, (150, 100))
             fireballImage = pygame.transform.rotate(fireballImageUnrotated, -90)
@@ -1457,7 +1464,7 @@ def bossAttackUp():
                 fireballMovement = 0
                 bossShootCount = 0
                 shoot_number += 1
-                if shoot_number != 5:
+                if shoot_number != 3:
                     fireball_shoot = False
                 else:
                     fireball_shoot = True
@@ -1537,6 +1544,134 @@ def bossAttackUp():
                     SCREEN.blit(bigExplosion, bigExplosion_rect)
 
         SCREEN.blit(bossFly, (bossX, bossY))
+
+def bossAttackRight():
+    global boss_animation_count, bossX, bossY, shoot_number, bigFireballX, fireball_shoot, bossLanded, bossShootCount, fireballMovement
+    global idleCount, platformX, jumping, falling, ground_y, on_platform, playerY, platform_rect, bigFireball_rect, boss_going_back, playerHealth
+    bossFlyUnsized = pygame.image.load(f"boss_idle/{boss_animation_count}.png").convert_alpha()
+    boss_animation_count += 1
+    bossFly = pygame.transform.scale(bossFlyUnsized, (new_width, new_height))
+    bossRect.topleft = (bossX, bossY)
+    if boss_animation_count == 12:
+        boss_animation_count = 0
+
+    if bigFireballX - 1100 >= 1000:
+        shoot_number = 0
+        bigFireballX = 0
+        fireball_shoot = False
+        platform_rect.center = (100, 50000)
+        bigFireball_rect.center = (0, 5000)
+        boss_going_back = True
+        on_platform = False
+        falling = True
+        platformX = 0
+
+    if boss_going_back == True:
+        bossGoBack()
+        return
+    
+    if bossLanded == False:
+        right_surf = pygame.Surface((50, 50))
+        right_rect = right_surf.get_rect(center=(600, 100))
+
+        rightX = right_rect.centerx
+        rightY = right_rect.centery
+        run = rightX - bossX
+        rise = rightY - bossY
+
+        rightHypoteneuse = math.sqrt(run ** 2 + rise ** 2)
+        if rightHypoteneuse == 0:
+            return
+        
+        boss_x_speed = run/rightHypoteneuse * boss_speed
+        boss_y_speed = rise/rightHypoteneuse * boss_speed
+        bossX += boss_x_speed
+        bossY += boss_y_speed
+
+        if rightHypoteneuse <= boss_speed:
+            bossX = rightX
+            bossY = rightY
+            bossLanded = True
+
+        SCREEN.blit(bossFly, (bossX, bossY))
+
+    elif bossLanded == True and fireball_shoot == False:
+        shootingImageUnsized = pygame.image.load(f"boss_attack/{bossShootCount}.png").convert_alpha()
+        bossShootCount += 1
+        shootingImage = pygame.transform.scale(shootingImageUnsized, (new_width, new_height))
+        shooting_rect = shootingImage.get_rect(topleft=(bossX, bossY))
+
+        if bossShootCount == 24:
+            bossShootCount = 0
+            fireball_shoot = True
+        
+        SCREEN.blit(shootingImage, shooting_rect)
+
+    if fireball_shoot == True:
+        bossIdleImageUnsized = pygame.image.load(f"boss_idle/{idleCount}.png").convert_alpha()
+        idleCount += 1
+        bossIdleImage = pygame.transform.scale(bossIdleImageUnsized, (new_width, new_height))
+        idle_rect = bossIdleImage.get_rect(topleft=(bossX, bossY))
+        if idleCount == 12:
+            idleCount = 0
+
+        SCREEN.blit(bossIdleImage, idle_rect)
+
+        if shoot_number <= 2:
+            fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
+            fireballImage = pygame.transform.scale(fireballImageUnsized, (150, 100))
+            fireball_rect = fireballImage.get_rect(center=(bossX + fireballMovement, bossY + 50))
+            fireballMovement -= 10
+
+            if fireball_rect.centerx <= 0:
+                shoot_number += 1
+                fireballMovement = 0
+                fireball_shoot = False
+
+            SCREEN.blit(fireballImage, fireball_rect)
+
+        else:
+
+            fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
+            bigFireballImageUnflipped = pygame.transform.scale(fireballImageUnsized, (750, 500))
+            bigFireballImage = pygame.transform.flip(bigFireballImageUnflipped, True, False)
+            bigFireball_rect = bigFireballImage.get_rect(center=(bigFireballX - 1000, 750))
+            bigFireballHitbox = pygame.Rect(bigFireballX - 1300, bigFireballY + 650, bigFireball_rect.width - 130, bigFireball_rect.height)
+            bigFireballX += 10
+
+            SCREEN.blit(bigFireballImage, bigFireball_rect)
+
+            platformImageUnsized = pygame.image.load("platform.png").convert_alpha()
+            platformImage = pygame.transform.scale(platformImageUnsized, (269, 100))
+            if platformX == 0:
+                platformX = random.randint(200, 750)
+            platform_rect = platformImage.get_rect(center=(platformX, 650))
+            platform_rectTop = pygame.Rect(platform_rect.centerx - 100, platform_rect.centery - 75, platform_rect.width - 50, 10)
+            pygame.draw.rect(SCREEN, RED, platform_rect, 3)
+            pygame.draw.rect(SCREEN, GREEN, platform_rectTop, 3)
+
+            if player_rect.colliderect(platform_rectTop):
+                player_rect.bottom = platform_rectTop.bottom
+                on_platform = True
+                jumping = False
+                falling = True
+
+            if not player_rect.colliderect(platform_rectTop) and on_platform == True:
+                ground_y = 667
+                falling = True
+                on_platform = False
+
+            if player_rect.colliderect(platform_rect):
+                falling = True
+
+            if player_rect.colliderect(bigFireballHitbox):
+                playerY -= 300
+                playerHealth -= 10
+
+            pygame.draw.rect(SCREEN, RED, bigFireballHitbox, 3)
+            #pygame.draw.rect(SCREEN, RED, bigFireball_rect, 3)
+
+            SCREEN.blit(platformImage, platform_rect)
 
 def bossAttackDown():
     print("He attacked down...")
@@ -1866,7 +2001,7 @@ def checkIfHit():
 
                 if attacking == False:
                      boss_damaged = True
-                     bossHealth -= 100
+                     bossHealth -= 10
 
                 else:
                     blocked = True
@@ -2019,29 +2154,30 @@ def rightAnimation():
 
 def playerJump():
     global jumping, playerY, ground_y
-    if playerY == ground_y:
+    if playerY == ground_y and on_platform == False:
         jumping = True
 
 def checkIfJumping():
     global jumping, playerY, vel_y, gravity, jump_height, falling, jump_speed, jump_count, ground_y
 
-    if jumping == True:
-        playerY -= jump_speed
-        vel_y -= gravity
+    if on_platform == False:
+        if jumping == True:
+            playerY -= jump_speed
+            vel_y -= gravity
 
-        if vel_y < -jump_height:
-            jumping = False
-            vel_y = jump_height
+            if vel_y < -jump_height:
+                jumping = False
+                vel_y = jump_height
 
-    else:
-        falling = True
+        else:
+            falling = True
 
-        if falling == True:
-            playerY += gravity + 20
+            if falling == True:
+                playerY += gravity + 20
 
-            if playerY >= ground_y:
-                playerY = ground_y
-                falling = False
+                if playerY >= ground_y:
+                    playerY = ground_y
+                    falling = False
 
 def checkCollisions():
     global playerX
