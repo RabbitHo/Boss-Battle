@@ -21,6 +21,7 @@ RED = (255, 0, 0)
 ORANGE = (252, 211, 3)
 PINK = (252, 3, 198)
 GREEN = (28, 235, 107)
+YELLOW = (245, 245, 66)
 
 BUTTON_HOVER_COLOR = (245, 176, 66)
 BUTTON_CLICK_COLOR = (255, 64, 239)
@@ -172,8 +173,8 @@ bossY = 400
 
 attackChoice = 0
 ATTACKLEFT = 2
-ATTACKRIGHT = 4
-ATTACKUP = 6
+ATTACKUP = 4
+ATTACKRIGHT = 6
 ATTACKDOWN = 9
 EVERYWHERE = 10
 STUNNED = 12
@@ -253,11 +254,28 @@ civilianX = 600
 space_holding = False
 endOfGame = False
 player_run = True
+endGame = False
+last_text_time = 0
 
 fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
 fireballImageUnrotated = pygame.transform.scale(fireballImageUnsized, (100, 50))
 fireball_rect = fireballImageUnrotated.get_rect(topleft=(10000, 0))
 fire_rect = fireballImageUnrotated.get_rect(center=(0, 0))
+
+fireballMovement = 0
+shoot_number = 0
+bossLanded = False
+fireball_shoot = False
+bossShootCount = 0
+shoot_spot = 0
+bigFireballX = 0
+bigFireballY = 0
+bigExplosionCount = 0
+bigExplosionSize = 0
+revert_explosion = False
+stopExplosion = False
+bigFireball_rect = pygame.Rect(0, 0, 0, 0)
+fire_animation_count = 0
 
 swordRect = swordRect = pygame.Rect(player_rect.centerx + 670, player_rect.centery - 700, 25, 10)
 
@@ -279,7 +297,8 @@ def startGame():
     while running:
 
         if gameOver == False:
-            current_time = pygame.time.get_ticks()
+            if endGame == False:
+                current_time = pygame.time.get_ticks()
             playerImage = pygame.image.load("character.png")
             clock.tick(FPS)
             drawGame()
@@ -384,7 +403,7 @@ def makeArrows():
 
 def scrollMaps():
     global playerY, ground_y, playerFlipped, endOfGame, shrink_circle, radiusNumber, moving_left, moving_right
-    global endOfGame, civilian_run
+    global endOfGame, civilian_run, endGame, last_text_time, current_time
     map_scroll = True
     while map_scroll == True:
         clock.tick(FPS)
@@ -409,7 +428,15 @@ def scrollMaps():
                 clock.tick(FPS)
                 findEvents()
                 shrinkCircle()
-            drawEnding()
+            
+            if endGame == False:
+                drawEnding()
+                checkForExit()
+                shrink_circle = True
+                last_text_time = pygame.time.get_ticks()
+            else:
+                endingText()
+
         screenScroll()
         createCivilian()
         playerY = 550
@@ -421,6 +448,53 @@ def scrollMaps():
             rightAnimation()
 
         pygame.display.update()
+
+def endingText():
+    global last_text_time, current_time
+    SCREEN.fill(BLACK) 
+    current_time = pygame.time.get_ticks()
+    last_font = pygame.font.SysFont("Georgia", 20)
+    last_text = '<Unknown> "My queen dragon has been defeated, huh?"'
+    last_text2 = '<Unknown> "I see."'
+    last_text3 = '<Unknown> "How dare they slay such beauty."'
+    last_text4 = '<Unknown> "With this royalty, I summon"'
+    last_text5 = '<Unknown> "The Dragon King."'
+
+    time_difference = current_time - last_text_time
+
+    if time_difference <= 3000:
+        last_surf = last_font.render(last_text, True, WHITE)
+        last_rect = last_surf.get_rect(center=(400, 400))
+        SCREEN.blit(last_surf, last_rect)
+    
+    elif time_difference > 3000 and time_difference <= 5000:
+        last_surf2 = last_font.render(last_text2, True, WHITE)
+        last_rect2 = last_surf2.get_rect(center=(400, 400))
+        SCREEN.blit(last_surf2, last_rect2)
+    
+    elif time_difference > 5000 and time_difference <= 7500:
+        last_surf3 = last_font.render(last_text3, True, WHITE)
+        last_rect3 = last_surf3.get_rect(center=(400, 400))
+        SCREEN.blit(last_surf3, last_rect3)
+
+    elif time_difference > 7500 and time_difference <= 10500:
+        last_surf4 = last_font.render(last_text4, True, WHITE)
+        last_rect4 = last_surf4.get_rect(center=(400, 400))
+        SCREEN.blit(last_surf4, last_rect4) 
+
+    elif time_difference > 10500 and time_difference <= 13500:
+        last_surf5 = last_font.render(last_text5, True, WHITE)
+        last_rect5 = last_surf5.get_rect(center=(400, 400))
+        SCREEN.blit(last_surf5, last_rect5)
+
+    else:
+        quitGame()
+
+def checkForExit():
+    global endGame
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_SPACE] or keys[pygame.K_ESCAPE]:
+        endGame = True
 
 def drawEnding():
     SCREEN.fill(LIGHTBLUE)
@@ -447,6 +521,7 @@ def drawEnding():
     body_text6 = "have defeated the one and only."
     body_text7 = "You saved the world from chaos and destruction!"
     body_text8 = "Congratulations!"
+    exit_text = "Press 'ESC' or 'SPACE' to exit!"
 
     body_text_surface = body_font.render(body_text1, True, BLACK)
     body_text_rect = body_text_surface.get_rect(topleft=(30, 250))
@@ -472,6 +547,9 @@ def drawEnding():
     body_text_surface8 = body_font.render(body_text8, True, BLACK)
     body_text_rect8 = body_text_surface8.get_rect(topleft=(30, 390))
 
+    exit_text_surface = subtitle_font.render(exit_text, True, BLACK)
+    exit_text_rect = exit_text_surface.get_rect(center=(400, 600))
+
     SCREEN.blit(body_text_surface, body_text_rect)
     SCREEN.blit(body_text_surface2, body_text_rect2)
     SCREEN.blit(body_text_surface3, body_text_rect3)
@@ -480,6 +558,7 @@ def drawEnding():
     SCREEN.blit(body_text_surface6, body_text_rect6)
     SCREEN.blit(body_text_surface7, body_text_rect7)
     SCREEN.blit(body_text_surface8, body_text_rect8)
+    SCREEN.blit(exit_text_surface, exit_text_rect)
     SCREEN.blit(story_surface, story_rect)
     SCREEN.blit(subtitle_surface, subtitle_rect)
     SCREEN.blit(ending_title_surface, ending_title_rect)
@@ -523,12 +602,12 @@ def screenScroll():
     global screenX, playerX, map_rect, screenLimitLeft, secondMap_rect, thirdMap_rect, screenLimitRight
     if playerX >= 600 and moving_right and not moving_left and not screenLimitRight:
         playerX = 600
-        screenX -= 25
+        screenX -= 7
         screenLimitLeft = False
     
     if playerX <= 200 and moving_left and not moving_right and not screenLimitLeft:
         playerX = 200
-        screenX += 5
+        screenX += 7
         screenLimitRight = False
     
     if playerX <= 3:
@@ -633,7 +712,7 @@ def civilianRun():
         SCREEN.blit(civilianImage, civilian_rect)
 
 def drawPlayer():
-    global playerImage, playerX, playerY, playerRun
+    global playerImage, playerX, playerY, playerRun, playerFlipped
 
     if playerAnimation == False:
         if playerFlipped == False:
@@ -703,7 +782,7 @@ def drawBackground():
     SCREEN.blit(backgroundImage, (0, 0))
 
 def drawCharacters():
-    global playerRun, playerX, playerY, playerAnimation, bossFly
+    global playerRun, playerX, playerY, playerAnimation, bossFly, playerFlipped
 
     if playerAnimation == False:
         if playerFlipped == False:
@@ -877,10 +956,10 @@ def printGameScreenText():
 def shrinkCircle():
     global radiusNumber, shrinkRadius, shrink_circle
 
-    if endOfGame == False:
+    if endOfGame == False or endGame == True:
         pygame.draw.circle(SCREEN, BLACK, player_rect.center, shrinkRadius + 1000, 800)
 
-    else:
+    elif endOfGame == True and endGame == False:
         pygame.draw.circle(SCREEN, LIGHTBLUE, player_rect.center, shrinkRadius + 1000, 800)
 
     radiusNumber += 0.5
@@ -893,7 +972,7 @@ def shrinkCircle():
     pygame.display.update()
 
 def playerDeath():
-    global playerDeathCount, player_dead
+    global playerDeathCount, player_dead, playerFlipped
 
     if player_dead:
         return
@@ -960,7 +1039,7 @@ def bossAttack():
     if attacking == False and boss_dead == False:
         last_fireball = fireballCooldown
         last_action_time = current_time
-        attackChoice = random.randint(1, 2)
+        attackChoice = random.randint(1, 4)
         if attackQuantity == 0:
             attacking = True
         
@@ -971,13 +1050,13 @@ def bossAttack():
         if attackChoice <= ATTACKLEFT:
             bossAttackLeft()
        
-        elif attackChoice <= ATTACKRIGHT and attackChoice > ATTACKLEFT:
-            bossAttackRight()
-
-        elif attackChoice <= ATTACKUP and attackChoice > ATTACKRIGHT:
+        elif attackChoice <= ATTACKUP and attackChoice > ATTACKLEFT:
             bossAttackUp()
 
-        elif attackChoice <= ATTACKDOWN and attackChoice > ATTACKUP:
+        elif attackChoice <= ATTACKRIGHT and attackChoice > ATTACKUP:
+            bossAttackRight()
+
+        elif attackChoice <= ATTACKDOWN and attackChoice > ATTACKRIGHT:
             bossAttackDown()
        
         else:
@@ -1024,7 +1103,6 @@ def bossAttackLeft():
 
         left_surf = pygame.Surface((50, 50))
         left_rect = left_surf.get_rect(topleft=(120, 160))
-        left_rect.topleft = (120, 160)
 
         leftX = left_rect.centerx
         leftY = left_rect.centery
@@ -1156,7 +1234,8 @@ def bossAttackLeft():
         if sidekickAlive == True and sidekickHealth > 0 and bossShooting == False:
             SCREEN.blit(bossFly2, (bossX2, bossY2))
 
-        pygame.draw.rect(SCREEN, GREEN, bossRect2, 3)
+        #Show sidekick hitbox during attack left
+        #pygame.draw.rect(SCREEN, GREEN, bossRect2, 3)
 
         if boss_flipped == False:
             pygame.draw.rect(SCREEN, RED, (bossX2 + 20, bossY2 - 20, 100, 15))
@@ -1239,7 +1318,7 @@ def sidekickShoot():
         SCREEN.blit(sidekickFly, sidekick_rect)
     
     else:
-        shootingImageUnsized = pygame.image.load(f"boss_attack/{shootingCount}.png").convert_alpha()
+        shootingImageUnsized = pygame.image.load(f"sidekick_attack/{shootingCount}.png").convert_alpha()
         shootingCount += 1
 
 
@@ -1253,6 +1332,7 @@ def sidekickShoot():
 
 def bossGoBack():
     global boss_animation_count, bossX, bossY, bossRect, boss_going_back, attacking, animationFinished, hypoteneuse, sidekickAlive, bossLanded
+    global revert_explosion, stopExplosion, bigFireball_rect, fireball_shoot, shoot_number, attackQuantity, bigFireballY
 
     bossFlyUnsized = pygame.image.load(f"boss_idle/{boss_animation_count}.png")
     boss_animation_count += 1
@@ -1266,12 +1346,26 @@ def bossGoBack():
 
     bossX, bossY, hypoteneuse = findHypoteneuse(backX, backY, bossX, bossY, hypoteneuse, boss_speed)
 
-    if hypoteneuse <= boss_speed:
-        boss_going_back = False
-        attacking = False
-        animationFinished = False
-        sidekickAlive = True
-        bossLanded = False
+    if round(hypoteneuse) <= 20:
+        if attackChoice <= ATTACKLEFT:
+            boss_going_back = False
+            attacking = False
+            animationFinished = False
+            sidekickAlive = True
+            bossLanded = False
+
+        elif attackChoice >= ATTACKUP and attackChoice < ATTACKDOWN:
+            attacking = False
+            boss_going_back = False
+            bossLanded = False
+            revert_explosion = False
+            stopExplosion = False
+            fireball_shoot = False
+            bigFireball_rect.center = (50000, 2000)
+            shoot_number = 0
+            attackQuantity += 1
+            bigFireballY = 0
+
 
     bossRect.topleft = (bossX, bossY)
     if boss_dead == False:
@@ -1298,7 +1392,151 @@ def bossAttackRight():
     print("He attacked right...")
 
 def bossAttackUp():
-    print("He attacked up...")
+    global boss_animation_count, bossX, bossY, fireball_shoot, fireballMovement, bossLanded, bossShootCount, shoot_number, bossRect, shoot_spot
+    global bigFireballY, bigFireballX, bigExplosionCount, bigExplosionSize, stopExplosion, revert_explosion, boss_going_back, playerX, playerY, playerHealth
+    global fire_animation_count, fire_rect
+
+    bossFlyUnsized = pygame.image.load(f"boss_idle/{boss_animation_count}.png").convert_alpha()
+    boss_animation_count += 1
+    bossFly = pygame.transform.scale(bossFlyUnsized, (new_width, new_height))
+    bossRect = bossFly.get_rect(topleft=(bossX, bossY))
+    if shoot_number == 6:
+        fireball_shoot = True
+
+    if boss_animation_count == 12:
+        boss_animation_count = 0
+
+    if bossLanded == False:
+        up_surf = pygame.Surface((50, 50))
+        up_rect = up_surf.get_rect(center=(400, 100))
+
+        upX = up_rect.centerx
+        upY = up_rect.centery
+
+        run = upX - bossX
+        rise = upY - bossY
+
+        upHypoteneuse = math.sqrt(run ** 2 + rise ** 2)
+
+        if upHypoteneuse == 0:
+            return
+
+        boss_x_speed = run/upHypoteneuse * boss_speed
+        boss_y_speed = rise/upHypoteneuse * boss_speed
+        bossX += boss_x_speed
+        bossY += boss_y_speed
+
+        SCREEN.blit(bossFly, (bossX, bossY))
+
+        if upHypoteneuse <= boss_speed:
+            bossX = upX
+            bossY = upY
+            bossLanded = True
+
+    elif bossLanded == True and fireball_shoot == False and shoot_number <= 5:
+        shootingImageUnsized = pygame.image.load(f"boss_attack/{bossShootCount}.png").convert_alpha()
+        bossShootCount += 1
+        shootingImageRotated = pygame.transform.scale(shootingImageUnsized, (new_width, new_height))
+        shootingImage = pygame.transform.rotate(shootingImageRotated, -90)   
+        shooting_rect = shootingImage.get_rect(topleft=(bossX, bossY))
+
+        if bossShootCount == 24:
+            fireball_shoot = True
+
+        SCREEN.blit(shootingImage, shooting_rect)
+
+    if fireball_shoot == True:
+        if shoot_number <= 5:
+            fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
+            fireballImageUnrotated = pygame.transform.scale(fireballImageUnsized, (150, 100))
+            fireballImage = pygame.transform.rotate(fireballImageUnrotated, -90)
+            fireball_rect = fireballImage.get_rect(center=(bossX + 40, bossY - fireballMovement))
+            fireballMovement += 10
+
+            if bossY - fireballMovement <= -20:
+                fireballMovement = 0
+                bossShootCount = 0
+                shoot_number += 1
+                if shoot_number != 5:
+                    fireball_shoot = False
+                else:
+                    fireball_shoot = True
+
+            bigFireballX = random.randint(50, 700)
+
+            SCREEN.blit(fireballImage, fireball_rect)
+
+        else:
+
+            if bigFireballY - 200 <= 800:
+                fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
+                fireballImageUnrotated = pygame.transform.scale(fireballImageUnsized, (750, 500))
+                bigFireballImage = pygame.transform.rotate(fireballImageUnrotated, 90)
+                bigFireball_rect = bigFireballImage.get_rect(center=(bigFireballX, bigFireballY - 200))
+                bigFireballY += 10
+                bigFireballRight = pygame.Rect(bigFireball_rect.centerx + 100, bigFireball_rect.centery + 50, 100, 200)
+                bigFireballLeft = pygame.Rect(bigFireball_rect.centerx - 100, bigFireball_rect.centery + 50, 100, 200)
+
+                #Draw big fire ball hitbox
+                #pygame.draw.rect(SCREEN, GREEN, bigFireballLeft, 3)
+                #pygame.draw.rect(SCREEN, RED, bigFireballRight, 3)
+
+                SCREEN.blit(bigFireballImage, bigFireball_rect)
+
+                if bigFireballLeft.colliderect(player_rect):
+                    playerX -= 500
+                    playerY -= 300
+                    playerHealth -= 20
+
+                elif bigFireballRight.colliderect(player_rect):
+                    playerX += 500
+                    playerY -= 300
+                    playerHealth -= 20
+
+            else:
+
+                if bigExplosionCount == 0 and revert_explosion == True:
+                    bigExplosionCount = 0
+                    stopExplosion = True
+                    boss_going_back = True
+                
+                if boss_going_back == True:
+                    bossGoBack()
+
+                if stopExplosion == True:
+                    fire_rect.center = (50000, 2000)
+
+                if stopExplosion == False:
+                    bigExplosionUnsized = pygame.image.load(f"bigFireball_collide/{bigExplosionCount}.png").convert_alpha()
+                    if revert_explosion == False:
+                        bigExplosionCount += 1
+
+                    if bigExplosionCount == 16 or revert_explosion == True:
+                        revert_explosion = True
+                        bigExplosionCount -= 1
+
+
+                    bigExplosion = pygame.transform.scale(bigExplosionUnsized, (bigExplosionSize + 598, bigExplosionSize + 500))
+                    if revert_explosion == False:
+                        bigExplosionSize += 5
+                    else:
+                        bigExplosionSize -= 5
+                    bigExplosion_rect = bigExplosion.get_rect(center=(bigFireballX, bigFireballY - 300))
+
+                    if revert_explosion == True:
+                        largeFireImageUnsized = pygame.image.load(f"fire/{fire_animation_count}.png").convert_alpha()
+                        largeFireImage = pygame.transform.scale(largeFireImageUnsized, (367, 250))
+                        fire_animation_count += 1
+                        if fire_animation_count == 7:
+                            fire_animation_count = 0
+
+                        fire_rect = largeFireImage.get_rect(center=(bigFireballX, bigFireballY - 300))
+
+                        SCREEN.blit(largeFireImage, fire_rect)
+
+                    SCREEN.blit(bigExplosion, bigExplosion_rect)
+
+        SCREEN.blit(bossFly, (bossX, bossY))
 
 def bossAttackDown():
     print("He attacked down...")
@@ -1370,16 +1608,18 @@ def checkBoomrngClicked():
 
 def handleKeys(keys):
     global playerX, playerY, playerSpeed, moving_left, moving_right, playerAnimation, spaceHolding, escape_pressed, menu, escape_holding
-
+    global playerFlipped
     moving_left = False
     moving_right = False
 
     if keys[pygame.K_a] or keys[pygame.K_LEFT]:
         playerX -= playerSpeed
+        playerFlipped = True
         moving_left = True
 
     if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
         playerX += playerSpeed
+        playerFlipped = False
         moving_right = True
 
     if keys[pygame.K_w] or keys[pygame.K_UP]:
@@ -1825,7 +2065,8 @@ def drawHealthBar():
     text_surface = font.render("Boss Health", True, WHITE)
     SCREEN.blit(text_surface, (655, 20))
 
-    pygame.draw.rect(SCREEN, GREEN, player_rect, 3)
+    #Show player hitbox during battle
+    #pygame.draw.rect(SCREEN, GREEN, player_rect, 3)
 
 def bossIdle():
     global new_width, new_height, boss_animation_count, bossFly, boss_damaged, boss_pos, bossX, bossY, bossImage_rect, bossRect
@@ -1919,22 +2160,13 @@ def checkBoomrngHovered():
         button_hover = 0
 
 def sword_choice():
-    global sword_swing, rotation_speed, added_y, swordImageUnrotated, swordRect, player_rect, playerX, playerY, bossY
-
-    bossRect = bossFly.get_rect(topleft=(bossX, bossY))
-    boss_pos = (bossX, bossY)
+    global sword_swing, rotation_speed, added_y, swordImageUnrotated, swordRect, player_rect, playerX, playerY, bossY, playerFlipped
 
     player_pos = (playerX, playerY)
     player_rect = playerImage.get_rect(center=player_pos)
     player_rect.topleft = (playerX, playerY)
     
     swordImageUnrotated = pygame.image.load("sword.png").convert_alpha()
-    
-    swordWidth = swordImageUnrotated.get_rect().width
-    swordHeight = swordImageUnrotated.get_rect().height
-
-    swordX = WIDTH // 2 - swordWidth // 2
-    swordY = HEIGHT * 3 // 4 + swordHeight // 2
 
     if playerFlipped == False:
         swordRect = pygame.Rect(player_rect.centerx + 67, player_rect.centery - 70, 25, 10)
@@ -2226,6 +2458,7 @@ def drawSwordSection():
     pygame.draw.rect(SCREEN, WHITE, (30, 310, 210, 200))
     pygame.draw.rect(SCREEN, BLACK, (30, 310, 210, 200), 3)
     SCREEN.blit(sword_text_surface, sword_text_rect)
+    SCREEN.blit(difficulty_sword_surface, difficulty_sword_rect)
 
     drawButton(button_rect, WEAPON_BUTTON_COLOR, use_text, button_font, SCREEN)
     pygame.draw.rect(SCREEN, BLACK, (20, 580, 228, 70), 3)
@@ -2239,6 +2472,7 @@ def drawBowSection():
     pygame.draw.rect(SCREEN, WHITE, (295, 310, 210, 200))
     pygame.draw.rect(SCREEN, BLACK, (295, 310, 210, 200), 3)
     SCREEN.blit(bow_text_surface, bow_text_rect)
+    SCREEN.blit(difficulty_bow_surface, difficulty_bow_rect)
 
     drawButton(bow_button_rect, BOW_BUTTON_COLOR, use_text, button_font, SCREEN)
     pygame.draw.rect(SCREEN, BLACK, (286, 580, 228, 70), 3)
@@ -2254,6 +2488,7 @@ def drawBoomrngSection():
     pygame.draw.rect(SCREEN, WHITE, (560, 310, 210, 200))
     pygame.draw.rect(SCREEN, BLACK, (560, 310, 210, 200), 3)
     SCREEN.blit(boomrng_text_surface, boomrng_text_rect)
+    SCREEN.blit(difficulty_boomrng_surface, difficulty_boomrng_rect)
 
     drawButton(boomrng_button_rect, BOOMRNG_BUTTON_COLOR, use_text, button_font, SCREEN)
     pygame.draw.rect(SCREEN, BLACK, (552, 580, 228, 70), 3)
@@ -2265,19 +2500,19 @@ def checkKeys(keys):
     global choice, leftHolding, rightHolding
 
     if leftHolding == False:
-        if keys[pygame.K_LEFT]:
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             choice -= 1
             leftHolding = True
     
-    if not (keys[pygame.K_LEFT]):
+    if not (keys[pygame.K_LEFT] or keys[pygame.K_a]):
         leftHolding = False
 
     if rightHolding == False:
-        if keys[pygame.K_RIGHT]:
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             choice += 1
             rightHolding = True
     
-    if not (keys[pygame.K_RIGHT]):
+    if not (keys[pygame.K_RIGHT] or keys[pygame.K_d]):
         rightHolding = False
 
     if choice == 4:
@@ -2488,13 +2723,26 @@ while choose_weapon == True:
     drawTitle(title_font, SCREEN, weapon_text, weapon_rect)
 
     font = pygame.font.SysFont("Comic Sans MS", 30)
+    difficulty_font = pygame.font.SysFont("Georgia", 20)
     bow_text = "BOW"
     sword_text = "SWORD"
     boomrng_text = "BOOMERANG"
     subtitle_text = "Use Arrow Keys To Interact!"
     use_text = "USE!"
+    difficulty_bow_text = "Difficulty: Medium"
+    difficulty_sword_text = "Difficulty: HARD"
+    difficulty_boomrng_text = "Difficulty: Easy"
 
-    sword_text_surface = font.render(sword_text, True, WHITE)
+    difficulty_bow_surface = difficulty_font.render(difficulty_bow_text, True, BLACK)
+    difficulty_bow_rect = difficulty_bow_surface.get_rect(center=(400, 560))
+
+    difficulty_sword_surface = difficulty_font.render(difficulty_sword_text, True, BLACK)
+    difficulty_sword_rect = difficulty_sword_surface.get_rect(center=(130, 560))
+
+    difficulty_boomrng_surface = difficulty_font.render(difficulty_boomrng_text, True, BLACK)
+    difficulty_boomrng_rect = difficulty_boomrng_surface.get_rect(center=(665, 560))
+
+    sword_text_surface = font.render(sword_text, True, BLACK)
     sword_text_rect = sword_text_surface.get_rect()
     sword_text_rect.center = (130, 530)
 
@@ -2502,7 +2750,7 @@ while choose_weapon == True:
     bow_text_rect = bow_text_surface.get_rect()
     bow_text_rect.center = (400, 530)
 
-    boomrng_text_surface = font.render(boomrng_text, True, WHITE)
+    boomrng_text_surface = font.render(boomrng_text, True, BLACK)
     boomrng_text_rect = boomrng_text_surface.get_rect()
     boomrng_text_rect.center = (665, 530)
 
