@@ -2,17 +2,21 @@
 ################################################# SORCERERS CLASH #################################################################
 
 #################################################### VARIABLES #####################################################################
+#Imports the needed functions for this game
 import pygame
+pygame.mixer.init()
 pygame.init()
 import math
-import sys
 import random
 
+#Width and Height of the screen
 WIDTH = 800
 HEIGHT = 800
 
+#The frames per second for the game
 FPS = 30
 
+#Colors used in the game
 BLUE = (0, 0, 255)
 LIGHTBLUE = (111, 150, 247)
 BLACK = (0, 0, 0)
@@ -23,10 +27,10 @@ PINK = (252, 3, 198)
 GREEN = (28, 235, 107)
 YELLOW = (245, 245, 66)
 
+#Colors used for buttons for when being clicked, hovered, or none
 BUTTON_HOVER_COLOR = (245, 176, 66)
 BUTTON_CLICK_COLOR = (255, 64, 239)
 BUTTON_COLOR = BLUE
-
 WEAPON_BUTTON_COLOR = RED
 BOW_BUTTON_COLOR = RED
 BOOMRNG_BUTTON_COLOR = RED
@@ -34,9 +38,11 @@ GUIDE_BUTTON_COLOR = BLUE
 HOME_BUTTON_COLOR = BLUE
 leaveButton_color = BLUE
 
+#Variable for checking if the left or right arrow key is being held
 leftHolding = False
 rightHolding = False
 
+#Variables for buttons being used
 button_width = 200
 button_height = 75
 button_text = "START"
@@ -46,21 +52,22 @@ button_y = 480
 button_clicked = False
 button_hover = 0
 
+#Variables for menu buttons
 fromGuide = False
 guide_clicked = False
 guide_hover = False
-
 home_clicked = False
 fromHome = False
 
-X_clicked = False
-
+#Variables to check if 'ESC' is being pressed or held
 menu = False
 escape_pressed = False
 escape_holding = False
 
+#Defines the text of the title on the title screen
 title_text = "SORCERERS CLASH"
 
+#Variables the boss would need for animation and movement
 boss_animation_count = 0
 boss_animation_count2 = 5
 boss_animation_count3 = 0
@@ -69,43 +76,58 @@ bossY2 = 400
 boss_flipped = False
 sidekickHealth = 100
 
+#Defines the choice of weapon the player decides
 weapon_choice = 0
 SWORD = 1
 BOW = 2
 BOOMRNG = 3
 
+#Variables to check if sword is swinging and it's rotation speed
 sword_swing = False
 rotation_speed = 3
 
+#Variables to check if player is moving left or right or none
 moving_left = False
 moving_right = False
 
+#Defines radius for a circle in further use
 radius = 0
 
+#Defines the choice for the weaponry the player must decide to use
 choice = 2
 
+#Defines the player's speed for it's movement
 playerSpeed = 10
 
+#Defines the animation for being damaged or others
 animation_count = 0
 dmg_animation_count = 0
 
+#Set the screen to it's height and weight (800, 800)
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
+
+#Set the game captions to be the game name, "Sorcerers Clash"
 pygame.display.set_caption("Sorcerers Clash")
 
+#Defines the variable to be the "clock" of the game
 clock = pygame.time.Clock()
 
+#Sets the player's character's image
 playerImage = pygame.image.load("character.png")
 
+#Defines the player's width and height
 playerWidth = playerImage.get_rect().width
 playerHeight = playerImage.get_rect().height
 
+#Defines the x and y coordinates of the player
 playerX = WIDTH // 2 - playerWidth // 2
 playerY = HEIGHT * 3 // 4 + playerHeight // 2
-
 player_pos = (playerX, playerY)
 
+#Make the hitbox of the player using their position
 player_rect = playerImage.get_rect(center=player_pos)
 
+#Variables for when the player presses 'W' or 'UP' to jump
 gravity = 10
 ground_y = playerY
 jump_height = 20
@@ -115,31 +137,32 @@ vel_y = jump_height
 fall_speed = 1
 falling = False
 jumping = False
-
 added_y = 0
 
+#Variables for when the player's sword hits the boss
 hit = False
 
+#Variables for when the player shoots their bow
 bow_number = 0
 bow_shoot = False
 shoot_arrow = False
 allow_angle = True
-
 is_fired = False
 arrow_speed = 15
 
+#Sets the arrow's image
 arrowUnchanged = pygame.image.load("arrow.png").convert_alpha()
 arrowImageUnrotated = pygame.transform.scale(arrowUnchanged, (85, 30))
 arrowImage = pygame.transform.rotate(arrowImageUnrotated, 5)
-
 arrow_rect = pygame.Rect(30, 20, 25, 25)
 
+#Sets the boomerang's image and it's coordinates
 boomrngImage = pygame.image.load("boomerang.png")
 boomrng_rect = boomrngImage.get_rect()
-
 boomrngX = playerX
 boomrngY = playerY
 
+#Variables to check for when the player uses the boomerang
 boomrng_shoot = False
 boomrng_spin = 0
 boomrng_speed = 15
@@ -147,30 +170,39 @@ allow_aim = True
 fly_back = False
 boomrng_hit = False
 
+#Variable to check if the player is holding space
 spaceHolding = False
 
+#Variable to check if the player's animation is being used
 playerAnimation = False
 
+#Sets the background image
 backgroundImage = pygame.image.load("background.png")
 
+#Variables for the new width and height for the boss
 new_width = 120
 new_height = 100
 
+#Sets the boss's image
 bossImageUnsized = pygame.image.load("boss.png")
 bossImage = pygame.transform.scale(bossImageUnsized, (new_width, new_height))
 
+#Variable to check if player is going left(flipped) or right(not flipped)
 playerFlipped = False
 
+#Sets the player's and boss's inital health
 playerHealth = 100
 bossHealth = 200
 
+#Variable to check if the player got hit from the boss when in contact with the boss
 playerGotHit = False
 
+#Defines the position of where the boss will initially be
 boss_pos = (350, 400)
-
 bossX = 350
 bossY = 400
 
+#Variables to check which attack will the boss "choose"
 attackChoice = 0
 ATTACKLEFT = 2
 ATTACKUP = 4
@@ -178,45 +210,55 @@ ATTACKRIGHT = 6
 ATTACKDOWN = 8
 EVERYWHERE = 10
 
+#Sets the boss fly image
 bossFly2 = pygame.image.load("boss.png")
 bossRect2 = bossFly2.get_rect(center=(0, 10000))
 
+#Variables to check if the boss has attacked for it to be stunned
 attackQuantity = 0
 stunnedCount = 0
 stunnedCooldown = 0
 bossStunned_rect = bossFly2.get_rect()
 
-sidekickAlive = True
-boss_damaged = False
-boss_speed = 5
-bossLanded = False
-blocked = False
-sidekickGotHit = False
-bossDeathCount = 0
-boss_going_back = False
-animationFinished = False
-hypoteneuse = 0
-fireballCooldown = 0
-last_fireball = 0
-bossShooting = False
-shooting = False
-shootingCount = 0
-shootAnimation = False
-fireball_speed = 10
-fireball_vx = 0
-fireball_vy = 0
-sidekick_animation = 0
-fireCooldown = 0
-fireCount = 0
-spawn_fire = False
-explosionCount = 0
-exploding = False
-explosion_size = 0
+#Variables for when the boss atacks. Checks if:
+sidekickAlive = True        # sidekick is alive or not
+boss_damaged = False        # the boss is damaged or not
+boss_speed = 5              #Defines the boss's speed to it's destination
+bossLanded = False          # the boss has arrived at it's destination
+blocked = False             # the boss blocked a projectile
+sidekickGotHit = False      # the sidekick got hit from the player
+bossDeathCount = 0          #Defines the animation for the boss
+boss_going_back = False     # the boss is going back to it's inital position
+animationFinished = False   # the animation for the boss has finished
+hypoteneuse = 0             #Defines the hypoteneuse for globalizing
+fireballCooldown = 0        #Defines the fireball's cooldown for globalizing
+last_fireball = 0           #Defines the previous fireball for globalizing
+bossShooting = False        # the boss is shooting or not
+shooting = False            # the boss is shooting or not
+shootingCount = 0           #Defines the shooting animation for the boss
+shootAnimation = False      # the boss animation is over or not
+fireball_speed = 10         #Defines the speed of the fireball
+fireball_vx = 0             #Defines the fireball's X movement
+fireball_vy = 0             #Defines the fireball's Y movement
+sidekick_animation = 0      #Defines the sidekick's animation
+fireCooldown = 0            #Defines the cooldown for the fire
+fireCount = 0               #Defines the animation for the fire
+spawn_fire = False          #Variable to check if the fire is spawned
+explosionCount = 0          #Defines the explosion's animation
+exploding = False           #Variable to check if the explosion is et
+explosion_size = 0          #Defines the explosion's size
 
+#Variables that check whether or not the player or the boss is dead
 player_dead = False
 boss_dead = False
+
+#Define's the player's death animation
 playerDeathCount = 0
+
+#Variable to check if the player is dead or not
 gameOver = False
+
+#Variables for the leave button after player dies
 leaveButton_width = 200
 leaveButton_height = 75
 leaveButton_x = 300
@@ -224,6 +266,7 @@ leaveButton_y = 500
 leaveButton_textSize = 50
 leaveButton_rect = pygame.Rect(leaveButton_x, leaveButton_y, leaveButton_width, leaveButton_height)
 
+#Variables for the closing animation when player dies
 movingYAmount = 0
 movingXAmount = 0
 closingAnimation = False
@@ -231,10 +274,11 @@ rightVertical = False
 stopRightVertical = False
 shrink_circle = True
 radiusNumber = 0
-shrinkRadius = 567    #Square root of (WIDTH ** 2 + HEIGHT ** 2) Then divided by 2
+shrinkRadius = 567    #Calculated using square root of (WIDTH ** 2 + HEIGHT ** 2) Then divided by 2
 game_screen = True
 random_text = False
 
+#Variables to check if player defeats the boss
 scroll_map = False
 map_confirmed = False
 second_map_confirmed = False
@@ -256,6 +300,7 @@ player_run = True
 endGame = False
 last_text_time = 0
 
+#Sets the fireball image for the boss's projectile
 fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
 fireballImageUnrotated = pygame.transform.scale(fireballImageUnsized, (100, 50))
 fireball_rect = fireballImageUnrotated.get_rect(topleft=(10000, 0))
@@ -263,8 +308,11 @@ fire_rect = fireballImageUnrotated.get_rect(center=(0, 0))
 fireball_rect2 = pygame.Rect(0, 0, 0, 0)
 fireballImage2 = pygame.image.load("fireball.png")
 
+#Variables to define the projectiles of the boss
 fireballX = 0
+fireballY = 0
 fireballX2 = 0
+fireball_cooldown = 0
 fireballMovement = 0
 fireballMovement2 = 0
 setFireballMovement = True
@@ -291,116 +339,162 @@ bigFireball_rect = pygame.Rect(0, 0, 0, 0)
 fireballShower = False
 swordRect = swordRect = pygame.Rect(player_rect.centerx + 670, player_rect.centery - 700, 25, 10)
 
+#Sets the second fireball image and it's hitbox
 fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
 fireballImageUnrotated = pygame.transform.scale(fireballImageUnsized, (150, 100))
 fireballImage = pygame.transform.rotate(fireballImageUnrotated, 45)
 fireballX2 = 0
+#Sets other fireball hitboxes
 fireballHitbox = pygame.Rect(0, 0, 0, 0)
 fireball2Hitbox = pygame.Rect(0, 0, 0, 0)
 fireball3Hitbox = pygame.Rect(0, 0, 0, 0)
 fireball4Hitbox = pygame.Rect(0, 0, 0, 0)
 fireball5Hitbox = pygame.Rect(0, 0, 0, 0)
+
+#Sets the boomerang image
 boomrngImage = pygame.image.load("boomerang.png").convert_alpha()
 boomrng_rect = boomrngImage.get_rect(center=(boomrngX, boomrngY))
 boomrng_rect.center = (boomrngX + 4000, boomrngY + 4000)
 
+#Sets the variable to become the last action time
 last_action_time = pygame.time.get_ticks()
 
-attack_cooldown = 5000
+#Variable to check if the boss is attacking or not
 attacking = False
 
+#Variables that checks if sound is played
+sound = 0
+fireballSound = 0
+fireSound = 0
+
+#Sets the background music
+pygame.mixer.music.load("sounds/background_music.mp3")
+pygame.mixer.music.play(-1)
+
+#Sounds that will be used for the game
+spinning_sound = pygame.mixer.Sound("sounds/boomrng_throw.wav")
+arrow_sound = pygame.mixer.Sound("sounds/arrow_shoot.wav")
+fire_sound = pygame.mixer.Sound("sounds/fire_sound.wav")
+sword_sound = pygame.mixer.Sound("sounds/sword_sound.wav")
+fireball_sound = pygame.mixer.Sound("sounds/fireball_shoot.mp3")
+bigFireball_sound = pygame.mixer.Sound("sounds/bigFireball_sound.wav")
+explosion_sound = pygame.mixer.Sound("sounds/explosion_sound.wav")
+fires_sound = pygame.mixer.Sound("sounds/fires_sound.wav")
 ################################################ FUNCTIONS ###################################################
 
+#Function to start the game
 def startGame():
     global attacking, current_time, animationFinished, bossHealth, boss_dead, bossRect, player_dead, gameOver, playerY, playerX
     running = True
-
+    #Sets the running loop so it remains forever until something closes it
     while running:
-
+        #If the player is still alive
         if gameOver == False:
+            #If the player has not clicked on the 'ESC' key
             if endGame == False:
-                current_time = pygame.time.get_ticks()
-            playerImage = pygame.image.load("character.png")
-            clock.tick(FPS)
-            drawGame()
-            findEvents()
+                current_time = pygame.time.get_ticks() #Sets the current time for further usage
+            clock.tick(FPS)                     #Sets the frames per second to be the defined variable, FPS(30)
+            drawGame()                          #Draw the game, background, characters, health bars
+            findEvents()                        #Check if the player presses the exit button or the play button
             keys = pygame.key.get_pressed()
-            handleKeys(keys)
-            checkIfJumping()
-            checkCollisions()
-            bossIdle()
-            CheckBossPosition()
-            checkForEscape(keys)
+            handleKeys(keys)                    #Checks what keys the player presses
+            checkIfJumping()                    #Checks if the player jumping
+            checkCollisions()                   #Checks if the player hits the wall so it does not go off-screen
+            bossIdle()                          #Function to animate the boss flying
+            CheckBossPosition()                 #Checks where the boss is for the game
+            checkForEscape(keys)                #Checks if the player presses 'ESC' key
 
+            #If the player's health is 0 or below
             if playerHealth <= 0:
+                #Sets the Y coordinates of the player to be on the ground in case the player jumped
                 playerY = 667
                 gameOver = True
 
+            #If the boss's health is 0 or below
             if bossHealth <= 0:
                 boss_dead = True
+                #Sets the boss's hitbox away from the game screen
                 bossRect.center = (-1000, -1000)
                 bossStunned_rect.center = (-10000, -10000)
-                bossDeath()
-                makeArrows()
+                bossDeath()     #Function to animate the boss's death
+                makeArrows()    #Function draw arrows the guide the player in the game
 
-                if E_clicked == True:
+                #If the player clicks 'E' or if the variable scroll_map is true
+                if E_clicked == True or scroll_map == True:
+                    #Set the X coordinates of the player to be 0
                     playerX = 0
-                    scrollMaps()
-
-                if scroll_map == True:
-                    playerX = 0
-                    scrollMaps()
-
+                    scrollMaps()    #Function to create a new map
 
             if boss_going_back == True and animationFinished == True:
-                bossGoBack()
+                bossGoBack()        #Function to make the boss fly back to it's inital possition
             else:
-                bossAttack()
+                bossAttack()        #Function to make the boss attack the player
 
-            updateHealthBars()
+            updateHealthBars()      #Function to update player's and boss's health bars if damaged 
 
+            #If player presses 'ESC'
             if menu == True:
-                escapeMenu()
+                escapeMenu()        #Function to create a menu
 
+            #If player is moving to the left
             if moving_left == True:
-                leftAnimation()
+                leftAnimation()     #Function to animate the player walking left
 
+            #If the player is moving to the right
             elif moving_right == True:
-                rightAnimation()
+                rightAnimation()    #Function to animate the player walking right
 
+            #If the player chooses their weapon as a sword
             if weapon_choice == SWORD:
-                sword_choice()
+                sword_choice()      #Function to create the sword and sword swinging animation
 
+            #If the player chooses their weapon as a bow
             elif weapon_choice == BOW:
-                bow_choice()
+                bow_choice()        #Function to create the bow and the animation for the shooting
             
+            #If the player chooses their weapon as a boomerang
             else:
-                boomrng_choice()
+                boomrng_choice()    #Function to create the boomerang and the animation of the throw
 
+            #Check if the boss gets hit by the player's weapon or if the player gets hit by the boss
             checkIfHit()
             
+            #If the boss is damaged from the player
             if boss_damaged == True:
-                bossDamaged()
+                bossDamaged()       #Function to animate the boss getting damaged
 
+            #Updates the game
             pygame.display.update()
 
+        #If the player is defeated
         else:
+            #Stop the current music and play the ending music
+            pygame.mixer.music.stop()
+            pygame.mixer.music.load("sounds/ending_sound.mp3")
+            pygame.mixer.music.play(-1)
+            #Function to check if the player closes the program
             findEvents()
+            #Function to animate the player's death
             playerDeath()
 
+            #If the player's death animation is finished
             if player_dead == True:
-                closingAnimations()
+                closingAnimations()     #Function to create a animation to conclude the game
 
+            #If the closing animation has ended
             if closingAnimation == True:
-                gameOverScreen()
+                gameOverScreen()        #Function to create the game over menu
 
+            #Updates the program
             pygame.display.update()
 
 def makeArrows():
     global radius, E_clicked, grow_circle, sign_font
+    #Draws an arrow pointing a direction on the right
     pygame.draw.line(SCREEN, BLUE, (WIDTH - 40, 700), (WIDTH - 80, 660), 8)
     line_rect = pygame.draw.line(SCREEN, BLUE, (WIDTH - 40, 700), (WIDTH - 80, 740), 8)
 
+    #If the player touches the lower line
     if player_rect.colliderect(line_rect):
         sign_text = "Press 'E' to interact!"
         sign_font = pygame.font.SysFont("Comic Sans MS", 20)
@@ -408,12 +502,15 @@ def makeArrows():
         sign_surface = sign_font.render(sign_text, True, BLACK)
         sign_rect = sign_surface.get_rect(center=(WIDTH - 130, 550))
 
+        #Create the text for the player to see
         SCREEN.blit(sign_surface, sign_rect)
 
         keys = pygame.key.get_pressed()
+        #If the player presses the 'E' key
         if keys[pygame.K_e]:
             grow_circle = True
             radius = 0
+            #Make an animation of a circle growing
             while grow_circle == True:
                 growCircle()
                 pygame.display.update()
@@ -424,53 +521,77 @@ def scrollMaps():
     global playerY, ground_y, playerFlipped, endOfGame, shrink_circle, radiusNumber, moving_left, moving_right
     global endOfGame, civilian_run, endGame, last_text_time, current_time
     map_scroll = True
+    #Play the new background music
+    pygame.mixer.music.load("sounds/final_background_music.mp3")
+    pygame.mixer.music.play(-1)
+    #Loops the new map
     while map_scroll == True:
+        #Set the frames per second to FPS(30)
         clock.tick(FPS)
-        findEvents()
-        drawMap()
-        drawPlayer()
+        findEvents()        #Function to check if the player exits the program
+        drawMap()           #Draws the new map and updates if the player moves
+        drawPlayer()        #Create the player and its animation
+
         keys = pygame.key.get_pressed()
+        #If the player did not interact with the civilian
         if civilian_interact == False and endOfGame == False:
-            checkKeysMap(keys)
+            checkKeysMap(keys)      #Function to check what keys the player presses
             shrink_circle = True
             radiusNumber = 0
+        #If the player has interacted with the civilian
         else:
+            #Set the movement to false and initiate the interaction
             moving_left = False
             moving_right = False
             playerFlipped = False
             player_rect.topleft = (playerX, playerY)
-            civilianInteraction()
+            civilianInteraction()   #Function to interact with the civilian
 
+        #If the interaction with the civilian is over and civilian stops running
         if endOfGame == True and civilian_run == False:
+            #Make an animation of shrinking the circle
             while shrink_circle == True:
                 clock.tick(FPS)
                 findEvents()
                 shrinkCircle()
             
             if endGame == False:
-                drawEnding()
-                checkForExit()
+                drawEnding()        #Function to draw the ending after the interaction with the civilian
+                checkForExit()      #Check if the player has pressed the 'ESC' or 'SPACE' key
                 shrink_circle = True
+                #Check for the last time the text has appeared
                 last_text_time = pygame.time.get_ticks()
             else:
-                endingText()
+                endingText()        #Function to create a cliffhanger for the player
 
-        screenScroll()
-        createCivilian()
-        playerY = 550
+        screenScroll()      #Function to create the screen to move when the player reaches a limit or wall
+        createCivilian()    #Function to create the civilian and move along the screen
+        playerY = 550       #Keep the player's Y coordinates to be 550
 
+        #If the player moves left
         if moving_left == True:
-            leftAnimation()
+            leftAnimation()     #Function to animate the player walking left
 
+        #If the player moves right
         elif moving_right == True:
-            rightAnimation()
+            rightAnimation()    #Function to animate the player walking right
 
+        #Updates the game
         pygame.display.update()
 
 def endingText():
-    global last_text_time, current_time
+    global last_text_time, current_time, sound
+    #Fill the screen with black
     SCREEN.fill(BLACK) 
+    #Find the current time 
     current_time = pygame.time.get_ticks()
+    pygame.mixer.music.stop()
+    if sound == 0:
+        pygame.mixer.music.load("sounds/ending_sound.mp3")
+        pygame.mixer.music.play(-1)
+        sound = 1
+    
+    #Create the font of the text and the text itself
     last_font = pygame.font.SysFont("Georgia", 20)
     last_text = '<Unknown> "My queen dragon has been defeated, huh?"'
     last_text2 = '<Unknown> "I see."'
@@ -478,23 +599,28 @@ def endingText():
     last_text4 = '<Unknown> "With this royalty, I summon"'
     last_text5 = '<Unknown> "The Dragon King."'
 
+    #Find the time difference between the current time and the first text time
     time_difference = current_time - last_text_time
 
+    #If the time difference is less than or equal to 3000 milliseconds
     if time_difference <= 3000:
         last_surf = last_font.render(last_text, True, WHITE)
         last_rect = last_surf.get_rect(center=(400, 400))
         SCREEN.blit(last_surf, last_rect)
     
+    #If the time difference is more than 3000 and less than or equal to 5000 milliseconds
     elif time_difference > 3000 and time_difference <= 5000:
         last_surf2 = last_font.render(last_text2, True, WHITE)
         last_rect2 = last_surf2.get_rect(center=(400, 400))
         SCREEN.blit(last_surf2, last_rect2)
     
+    #If the time difference is more than 5000 and less than or equal to 7500 milliseconds
     elif time_difference > 5000 and time_difference <= 7500:
         last_surf3 = last_font.render(last_text3, True, WHITE)
         last_rect3 = last_surf3.get_rect(center=(400, 400))
         SCREEN.blit(last_surf3, last_rect3)
 
+    
     elif time_difference > 7500 and time_difference <= 10500:
         last_surf4 = last_font.render(last_text4, True, WHITE)
         last_rect4 = last_surf4.get_rect(center=(400, 400))
@@ -669,10 +795,15 @@ def checkKeysMap(keys):
             civilian_interact = True
 
 def civilianInteraction():
-    global civilian_running, interaction_next, space_holding, civilian_interact, endOfGame
+    global civilian_running, interaction_next, space_holding, civilian_interact, endOfGame, sound, civilian_sound
     if civilian_running == False:
         pygame.draw.rect(SCREEN, BLACK, (50, 100, 720, 100))
         pygame.draw.rect(SCREEN, WHITE, (50, 100, 720, 100), 10)
+
+    if sound == 0:
+        civilian_sound = pygame.mixer.Sound("sounds/civilian_talking.mp3")
+        civilian_sound.play()
+
     interact_font = pygame.font.SysFont("Georgia", 20)
     interact_text1 = "<Civilian> You really beat the dragons? That's really great! It's finally done!"
     interact_text2 = "<Civilian> I'll go tell the others about this. Thank you!"
@@ -697,6 +828,8 @@ def civilianInteraction():
         SCREEN.blit(interact3_surface, interact3_rect)
     
     else:
+        sound = 1
+        civilian_sound.stop()
         civilian_running = True
         civilian_interact = False
         endOfGame = True
@@ -706,6 +839,8 @@ def civilianInteraction():
     if keys[pygame.K_SPACE] and space_holding == False:
         space_holding = True
         interaction_next += 1
+        click_sound = pygame.mixer.Sound("sounds/click_civilian_sound.wav")
+        click_sound.play()
 
     if not keys[pygame.K_SPACE]:
         space_holding = False
@@ -1008,10 +1143,15 @@ def playerDeath():
     SCREEN.blit(playerDeathImage, playerDeath_rect)
 
 def bossDeath():
-    global explosion_size, bossDeathCount
+    global explosion_size, bossDeathCount, sound
+
+    explosion_sound.play()
 
     if bossDeathCount == 16:
         bossRect.center = (-1000, -1000)
+        explosion_sound.stop()
+        pygame.mixer.music.stop()
+        sound = 0
         return
     
     bossDeathImageUnsized = pygame.image.load(f"boss_death/{bossDeathCount}.png").convert_alpha()
@@ -1223,6 +1363,8 @@ def bossAttackLeft():
        
         if bossShooting == True:
             if shooting == True:
+                shoot_sound = pygame.mixer.Sound("sounds/fireball_shoot.mp3")
+                shoot_sound.play()
                 fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
                 fireballImageUnrotated = pygame.transform.scale(fireballImageUnsized, (100, 50))
                 fireball_rect = fireballImageUnrotated.get_rect(center=(bossRect2.center))
@@ -1295,8 +1437,10 @@ def shootFireball():
     SCREEN.blit(fireballImage, rotated_rect)
 
 def createFire():
-    global fireCount, spawn_fire, fireCooldown, fire_rect, fireX, fireY, last_action_time
-    #if fireCooldown == 0 and spawn_fire:
+    global fireCount, spawn_fire, fireCooldown, fire_rect, fireX, fireY, last_action_time, fire_sound, fireSound
+    if fireSound == 0:
+        fire_sound.play()
+        fireSound = 1
     fireCooldown = pygame.time.get_ticks()
     fireImageUnsized = pygame.image.load(f"fire/{fireCount}.png").convert_alpha()
     fireImage = pygame.transform.scale(fireImageUnsized, (100, 100))
@@ -1310,6 +1454,8 @@ def createFire():
         SCREEN.blit(fireImage, fire_rect)
     
     else:
+        fire_sound.stop()
+        fireSound = 0
         fireCooldown = 0
         spawn_fire = False
         fire_rect.center = (1000, 1000)
@@ -1433,7 +1579,7 @@ def findHypoteneuse(targetX, targetY, userX, userY, hypoteneuse, speed):
 def bossAttackUp():
     global boss_animation_count, bossX, bossY, fireball_shoot, fireballMovement, bossLanded, bossShootCount, shoot_number, bossRect, shoot_spot
     global bigFireballY, bigFireballX, bigExplosionCount, bigExplosionSize, stopExplosion, revert_explosion, boss_going_back, playerX, playerY, playerHealth
-    global fire_animation_count, fire_rect
+    global fire_animation_count, fire_rect, fireballSound, fireball_sound, bigFireball_sound
 
     bossFlyUnsized = pygame.image.load(f"boss_idle/{boss_animation_count}.png").convert_alpha()
     boss_animation_count += 1
@@ -1486,6 +1632,9 @@ def bossAttackUp():
 
     if fireball_shoot == True:
         if shoot_number <= 3:
+            if fireballSound == 0:
+                fireball_sound.play()
+                fireballSound = 1
             fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
             fireballImageUnrotated = pygame.transform.scale(fireballImageUnsized, (150, 100))
             fireballImage = pygame.transform.rotate(fireballImageUnrotated, -90)
@@ -1498,6 +1647,7 @@ def bossAttackUp():
                 shoot_number += 1
                 if shoot_number != 3:
                     fireball_shoot = False
+                    fireballSound = 0
                 else:
                     fireball_shoot = True
 
@@ -1533,11 +1683,14 @@ def bossAttackUp():
                     playerHealth -= 20
 
             else:
-
+                if fireballSound == 0:
+                    bigFireball_sound.play()
+                    fireballSound = 1
                 if bigExplosionCount == 0 and revert_explosion == True:
                     bigExplosionCount = 0
                     stopExplosion = True
                     boss_going_back = True
+                    fireballSound = 0
                 
                 if boss_going_back == True:
                     bossGoBack()
@@ -1546,6 +1699,9 @@ def bossAttackUp():
                     fire_rect.center = (50000, 2000)
 
                 if stopExplosion == False:
+                    if fireballSound == 0:
+                        fireballSound = 1
+                        explosion_sound.play()
                     bigExplosionUnsized = pygame.image.load(f"bigFireball_collide/{bigExplosionCount}.png").convert_alpha()
                     if revert_explosion == False:
                         bigExplosionCount += 1
@@ -1580,6 +1736,7 @@ def bossAttackUp():
 def bossAttackRight():
     global boss_animation_count, bossX, bossY, shoot_number, bigFireballX, fireball_shoot, bossLanded, bossShootCount, fireballMovement
     global idleCount, platformX, jumping, falling, ground_y, on_platform, playerY, platform_rect, bigFireball_rect, boss_going_back, playerHealth
+    global fireballSound, fireball_sound
     bossFlyUnsized = pygame.image.load(f"boss_idle/{boss_animation_count}.png").convert_alpha()
     boss_animation_count += 1
     bossFly = pygame.transform.scale(bossFlyUnsized, (new_width, new_height))
@@ -1588,6 +1745,7 @@ def bossAttackRight():
         boss_animation_count = 0
 
     if bigFireballX - 1100 >= 1000:
+        fireballSound = 0
         shoot_number = 0
         bigFireballX = 0
         fireball_shoot = False
@@ -1650,6 +1808,9 @@ def bossAttackRight():
         SCREEN.blit(bossIdleImage, idle_rect)
 
         if shoot_number <= 2:
+            if fireballSound == 0:
+                fireball_sound.play()
+                fireballSound = 1
             fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
             fireballImage = pygame.transform.scale(fireballImageUnsized, (150, 100))
             fireball_rect = fireballImage.get_rect(center=(bossX + fireballMovement, bossY + 50))
@@ -1659,11 +1820,14 @@ def bossAttackRight():
                 shoot_number += 1
                 fireballMovement = 0
                 fireball_shoot = False
+                fireballSound = 0
 
             SCREEN.blit(fireballImage, fireball_rect)
 
         else:
-
+            if fireballSound == 0:
+                fireballSound = 1
+                bigFireball_sound.play()
             fireballImageUnsized = pygame.image.load("fireball.png").convert_alpha()
             bigFireballImageUnflipped = pygame.transform.scale(fireballImageUnsized, (750, 500))
             bigFireballImage = pygame.transform.flip(bigFireballImageUnflipped, True, False)
@@ -1711,8 +1875,8 @@ def bossAttackDown():
     global fireballY, fireballX, fireballY2, fireballX2, fireballY3, fireballX3, fireballY4, fireballX4, fireballY5, fireballX5
     global fireballShower, bossLanded, bossX, bossY, fireball_shoot, fireballShower, bossShootCount, idleCount
     global boss_wait_time, fireballImage, fireball_cooldown, boss_going_back, playerX, playerY, playerHealth
-    global fireball_rect, fireball_rect2, fireball_rect3, fireball_rect4, fireball_rect5, exploding
-    global fireballHitbox, fireball2Hitbox, fireball3Hitbox, fireball4Hitbox, fireball5Hitbox
+    global fireball_rect, fireball_rect2, fireball_rect3, fireball_rect4, fireball_rect5, exploding, fireball_cooldown
+    global fireballHitbox, fireball2Hitbox, fireball3Hitbox, fireball4Hitbox, fireball5Hitbox, fires_sound, fireballSound
     bossRect.topleft = (bossX, bossY)
 
     if boss_going_back == True:
@@ -1782,6 +1946,8 @@ def bossAttackDown():
             fireball_cooldown = pygame.time.get_ticks()  
 
     if fireballShower == True:
+        if fireball_cooldown == 0:
+            fireball_cooldown = pygame.time.get_ticks()
         fireballImage2 = fireballImage
         fireballImage3 = fireballImage
         fireballImage4 = fireballImage
@@ -1794,6 +1960,9 @@ def bossAttackDown():
         fireballX -= 5
 
         if current_time - fireball_cooldown >= 4000:
+            if fireballSound == 0:
+                fires_sound.play()
+                fireballSound = 1
             fireball2Hitbox = pygame.Rect(fireballX2 - 50, fireballY2 - 50, 75, 75)
             fireball_rect2 = fireballImage2.get_rect(center=(fireballX2, fireballY2 - 50))
             fireballY2 += 15
@@ -1825,6 +1994,7 @@ def bossAttackDown():
             boss_going_back = True
             fireballY5 = 0
             fireballX2 = 0
+            fireballSound = 0
         
         elif fireballY4 >= 800:
             fireball_rect4.center = (10000, 10234)
@@ -1858,7 +2028,7 @@ def bossAttackDown():
 def bossAttackEverywhere():
     global boss_animation_count, bossLanded, fireball_shoot, bossShootCount, fireballMovement
     global bossX, bossY, fireballMovement2, fireball_rect2, setFireballMovement, setFireballMovement2
-    global fireballImage2, fireballX, fireballX2, bossFlipped, boss_going_back, playerX, playerY, playerHealth
+    global fireballImage2, fireballX, fireballX2, bossFlipped, boss_going_back, playerX, playerY, playerHealth, fireballSound
 
     bossFlyUnsized = pygame.image.load(f"boss_idle/{boss_animation_count}.png").convert_alpha()
     boss_animation_count += 1
@@ -1913,6 +2083,7 @@ def bossAttackEverywhere():
 
         if bossX >= 750 and bossFlipped == True:
             boss_going_back = True
+            fireballSound = 0
 
         if bossFlipped == True:
             bossX += 5
@@ -1924,7 +2095,10 @@ def bossAttackEverywhere():
             fireballX = bossX + 50
         elif fireballX2 <= 0:
             fireballX2 = bossX + 50
-            
+        
+        if fireballSound == 0:
+            fires_sound.play()
+            fireballSound = 1
         fireballImageUnrotated = pygame.image.load("fireball.png").convert_alpha()
         fireballImageUnsized = pygame.transform.rotate(fireballImageUnrotated, 90)
         fireballImage = pygame.transform.scale(fireballImageUnsized, (100, 150))
@@ -2164,12 +2338,6 @@ def createMenu():
         exit()
         import sys
         sys.exit()
-
-    if X_clicked == True:
-        menu = False
-        X_clicked = False
-        menu = False
-        guide_clicked = X_clicked = False
 
     pygame.display.update()
 
@@ -2591,7 +2759,7 @@ def checkBoomrngHovered():
 
 def sword_choice():
     global sword_swing, rotation_speed, added_y, swordImageUnrotated, swordRect, player_rect, playerX, playerY, bossY, playerFlipped
-
+    global sword_sound, sound
     player_pos = (playerX, playerY)
     player_rect = playerImage.get_rect(center=player_pos)
     player_rect.topleft = (playerX, playerY)
@@ -2627,7 +2795,9 @@ def sword_choice():
             SCREEN.blit(swordImage, (playerX + 5, playerY - 60))
 
         else:
-            
+            if sound == 0:
+                sword_sound.play()
+                sound = 1
             swordImage = pygame.transform.rotate(swordImageUnrotated, -rotation_speed)
 
             rotation_speed += 25
@@ -2636,6 +2806,7 @@ def sword_choice():
                 sword_swing = False
                 rotation_speed = 0
                 added_y = 0
+                sound = 0
 
             SCREEN.blit(swordImage, (playerX, playerY + added_y))
 
@@ -2648,6 +2819,9 @@ def sword_choice():
             SCREEN.blit(swordImage, (playerX - 70, playerY - 60))
 
         else:
+            if sound == 0:
+                sword_sound.play()
+                sound = 1
             swordImage = pygame.transform.rotate(swordImageUnrotated, rotation_speed)
 
             rotation_speed += 25
@@ -2656,6 +2830,7 @@ def sword_choice():
                 sword_swing = False
                 rotation_speed = 0
                 added_y = 0
+                sound = 0
 
             SCREEN.blit(swordImage, (playerX - 100, playerY + added_y))
 
@@ -2663,6 +2838,7 @@ def sword_choice():
 
 def bow_choice():
     global player_rect, bow_number, bow_shoot, shoot_arrow, angle, angle_degrees, arrow_angle, allow_angle, mouse_x, mouse_y, arrow_x_speed, arrow_y_speed, is_fired, arrowX, arrowY
+    global sound, arrow_sound
     player_pos = (playerX, playerY)
     player_rect = playerImage.get_rect(center=player_pos)
     player_rect.topleft = (playerX, playerY)
@@ -2683,6 +2859,7 @@ def bow_choice():
 
     else:
         if shoot_arrow == False:
+            sound = 0
             angle = angle_degrees - 90
             bowImageUnchanged = pygame.image.load(f"bow_shoot/{bow_number}.png").convert_alpha()
             bowImageUnrotated = pygame.transform.scale(bowImageUnchanged, (100, 100))
@@ -2696,6 +2873,9 @@ def bow_choice():
                 bow_number = 0
 
     if shoot_arrow == True:
+        if sound == 0:
+            arrow_sound.play()
+            sound = 1
         angle = angle_degrees - 90
         bowImageUnchanged = pygame.image.load("bow_shoot/10.png").convert_alpha()
         bowImageUnrotated = pygame.transform.scale(bowImageUnchanged, (100, 100))
@@ -2768,6 +2948,7 @@ def shootArrow():
                                                                                                                                                                                                     #easter egg
 def boomrng_choice():
     global boomrngImage, boomrng_spin, playerFlipped, boomrngImageUnrotated, boomrngX, boomrngY, mouse_x, mouse_y, allow_aim, mouse_pos, mouse_rect, player_rect, boomrng_hit, boomrng_rect
+    global sound, spinning_sound
 
     player_rect = playerImage.get_rect(center=(playerX + 40, playerY + 60))
     
@@ -2776,6 +2957,8 @@ def boomrng_choice():
 
     if boomrng_shoot == False:
         boomrng_rect.center = (1000, 1000)
+        spinning_sound.stop()
+        sound = 0
 
     if allow_aim == True:
         mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -2801,7 +2984,10 @@ def boomrng_choice():
         shootBoomrng()
 
 def spinBoomrng():
-    global boomrngImageUnrotated, boomrngImage, boomrng_spin, boomrng_rect
+    global boomrngImageUnrotated, boomrngImage, boomrng_spin, boomrng_rect, sound, spinning_sound
+    if sound == 0:
+        spinning_sound.play()
+        sound = 1
     boomrngImage = pygame.transform.rotate(boomrngImageUnrotated, boomrng_spin - 45)
 
     boomrng_spin -= 25
@@ -2928,11 +3114,12 @@ def drawBoomrngSection():
 
 def checkKeys(keys):
     global choice, leftHolding, rightHolding
-
+    swipe_sound = pygame.mixer.Sound("sounds/swipe_sound.mp3")
     if leftHolding == False:
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             choice -= 1
             leftHolding = True
+            swipe_sound.play()
     
     if not (keys[pygame.K_LEFT] or keys[pygame.K_a]):
         leftHolding = False
@@ -2941,6 +3128,7 @@ def checkKeys(keys):
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             choice += 1
             rightHolding = True
+            swipe_sound.play()
     
     if not (keys[pygame.K_RIGHT] or keys[pygame.K_d]):
         rightHolding = False
@@ -3127,6 +3315,8 @@ while introduction == True:
     drawButton(button_rect, BUTTON_COLOR, button_text, button_font, SCREEN)
 
     if button_clicked == True:
+        click_sound = pygame.mixer.Sound("sounds/button_click.wav")
+        click_sound.play()
         introduction = False
         pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_ARROW)
         button_hover = 0
@@ -3202,6 +3392,7 @@ while choose_weapon == True:
         pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
     if button_clicked == True:
+        click_sound.play()
         BOW_BUTTON_COLOR = BUTTON_CLICK_COLOR
         BOOMRNG_BUTTON_COLOR = BUTTON_CLICK_COLOR
         checkKeys(keys)
