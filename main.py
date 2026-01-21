@@ -3498,9 +3498,9 @@ def bow_choice():
         #If the arrow can change it's angle
         if allow_angle == True:
             #Get the mouse's position 
-            #Move the arrow towards the mouse's shooting position
             mouse_x, mouse_y = pygame.mouse.get_pos()
 
+            #Define the hypoteneuse of arrow and mouse position
             arrowX = playerX
             arrowY = playerY
             run = mouse_x - arrowX
@@ -3516,62 +3516,77 @@ def bow_choice():
             arrow_angle = angle_degrees - 10
             allow_angle = False
 
-        shootArrow()
+        shootArrow()        #Function to move the arrow towards the destination
 
     bow_rect = bowImage.get_rect(center=player_rect.center)
 
+    #Draw the bow
     SCREEN.blit(bowImage, bow_rect.topleft)
 
 def shootArrow():
     global angle_degrees, arrow_angle, mouse_x, mouse_y, arrowX, arrowY, is_fired, shoot_arrow, bow_shoot, allow_angle, arrow_rect
-  
+    #Create the arrow image
     arrowUnchanged = pygame.image.load("arrow.png").convert_alpha()
     arrowImageUnrotated = pygame.transform.scale(arrowUnchanged, (85, 30))
     arrowImage = pygame.transform.rotate(arrowImageUnrotated, arrow_angle)
-
-    if arrow_angle < 90 and arrow_angle > -180:
+    #If the arrow angle is less than 90 and angle is more than or equal to -180
+    if arrow_angle < 90 and arrow_angle >= -180:
+        #Create the arrow's hitbox
         arrow_rect = pygame.Rect(arrowX + 30, arrowY + 20, 25, 25)
 
+    #If the arrow angle is mroe than 90 and is less than or equal to 180
     elif arrow_angle > 90 and arrow_angle <= 180:
         arrow_rect = pygame.Rect(arrowX, arrowY, 25, 25)
 
+    #Change the arrow's coordinates
     arrowX += arrow_x_speed
     arrowY += arrow_y_speed
 
+    #If the arrow is not fired
     if is_fired == False:
+        #Draw the arrow image on the player
         SCREEN.blit(arrowImage, player_rect.center)
 
+    #If the arrow is fired
     else:
+        #Draw the moving arrow image 
         SCREEN.blit(arrowImage, (arrowX - 20, arrowY))
+
         #Show arrow hitbox
         #pygame.draw.rect(SCREEN, RED, arrow_rect, 5)
 
+    #If the arrow's Y coordinates is less than 0 or over 800
     if arrowY <= 0 or arrowY >= 800:
+        #Rearm the player with the arrow
         is_fired = False
         shoot_arrow = False
         bow_shoot = False
         allow_angle = True
 
+    #If the arrow's X coordinates is less than 0 or over 800
     if arrowX <= 0 or arrowX >= 800:
+        #Rearm the player with the arrow
         is_fired = False
         shoot_arrow = False
         bow_shoot = False
         allow_angle = True
-                                                                                                                                                                                                    #easter egg
+
 def boomrng_choice():
     global boomrngImage, boomrng_spin, playerFlipped, boomrngImageUnrotated, boomrngX, boomrngY, mouse_x, mouse_y, allow_aim, mouse_pos, mouse_rect, player_rect, boomrng_hit, boomrng_rect
     global sound, spinning_sound
-
     player_rect = playerImage.get_rect(center=(playerX + 40, playerY + 60))
     
+    #Create the boomerang image
     boomrngImageUnscaled = pygame.image.load("boomerang.png").convert_alpha()
     boomrngImageUnrotated = pygame.transform.scale(boomrngImageUnscaled, (75, 75))
 
+    #If the boomerang is not shot
     if boomrng_shoot == False:
         boomrng_rect.center = (1000, 1000)
         spinning_sound.stop()
         sound = 0
 
+    #If the player is allowed to aim
     if allow_aim == True:
         mouse_x, mouse_y = pygame.mouse.get_pos()
         boomrngX = playerX
@@ -3579,37 +3594,45 @@ def boomrng_choice():
         mouse_pos = (boomrngX, boomrngY)
         mouse_rect = pygame.Rect(mouse_x, mouse_y, 2, 2)
 
+    #If the boomerang is not shot
     if boomrng_shoot == False:
+        #Rotate the 45 degrees clockwise
         boomrngImage = pygame.transform.rotate(boomrngImageUnrotated, -45)
         boomrng_hit = False
 
+        #If the player is not flipped
         if playerFlipped == False:
+            #Draw the boomerang image
             SCREEN.blit(boomrngImage, (playerX + 40, playerY + 23))
-
+        #If the player is flipped
         else:
+            #Draw the flipped boomerang image
             boomrngImageFlipped = pygame.transform.flip(boomrngImage, True, False)
             SCREEN.blit(boomrngImageFlipped, (playerX - 70, playerY + 20))
 
+    #If the boomerang is shot
     else:
         allow_aim = False
-        spinBoomrng()
-        shootBoomrng()
+        spinBoomrng()       #Function to spin the boomerang while shot
+        shootBoomrng()      #Function to throw the boomerang
 
 def spinBoomrng():
     global boomrngImageUnrotated, boomrngImage, boomrng_spin, boomrng_rect, sound, spinning_sound
     if sound == 0:
+        #Play the spinning sound
         spinning_sound.play()
         sound = 1
+    #Rotate the image
     boomrngImage = pygame.transform.rotate(boomrngImageUnrotated, boomrng_spin - 45)
-
     boomrng_spin -= 25
 
 def shootBoomrng():
     global boomrngX, boomrngY, fly_back, allow_aim, boomrng_shoot, player_rect, boomrng_rect
-
+    #Make the boomerang hitbox
     boomrng_rect = boomrngImage.get_rect(center=(boomrngX, boomrngY))
     boomrng_rect.center = (boomrngX + 40, boomrngY + 40)
 
+    #Draw the boomerang's hitbox
     #pygame.draw.rect(SCREEN, GREEN, boomrng_rect, 3)
 
     player_rect = playerImage.get_rect(center=(playerX + 40, playerY + 60))
@@ -3617,7 +3640,7 @@ def shootBoomrng():
     run = mouse_x - boomrngX
     rise = mouse_y - boomrngY
     distance = (run, rise)
-
+    #Find the hypoteneuse with the boomerang and the mouse
     hypoteneuse = math.sqrt(run ** 2 + rise ** 2)
 
     boomrng_x_speed = run/hypoteneuse * boomrng_speed
@@ -3628,12 +3651,16 @@ def shootBoomrng():
     if boomrng_rect.colliderect(mouse_rect):
         fly_back = True
 
+    #Draw the boomerang image
     SCREEN.blit(boomrngImage, boomrng_rect.center)
 
+    #If the boomerang is not flying back
     if fly_back == False:
+        #Move the boomerang
         boomrngX += boomrng_x_speed
         boomrngY += boomrng_y_speed
 
+    #If the boomerang is flying back
     else:
         run = player_rect.centerx - boomrngX
         rise = player_rect.centery - boomrngY
@@ -3643,159 +3670,211 @@ def shootBoomrng():
             boomrng_x_speed = run / distance * boomrng_speed
             boomrng_y_speed = rise / distance * boomrng_speed
 
+            #Move the boomerang towards the player
             boomrngX += boomrng_x_speed
             boomrngY += boomrng_y_speed
 
+        #If the boomerang touches the player
         if boomrng_rect.colliderect(player_rect):
+            #Rearm the player with the boomerang
             fly_back = False
             allow_aim = True
             boomrng_shoot = False
 
-#    pygame.draw.rect(SCREEN, GREEN, (boomrngX, boomrngY, 75, 75), 3)
-
+    #Draw the boomerang's hitbox
+    #pygame.draw.rect(SCREEN, GREEN, (boomrngX, boomrngY, 75, 75), 3)
 
 def drawButton(rect, color, text, font, surface):
+    #Function to draw a button anywhere
+    #Draw the rectangle using the given surface, color, and rectangle
     pygame.draw.rect(surface, color, rect)
+    #Draw the text using the given font and using the color white
     text_surface = font.render(text, True, WHITE)
     text_rect = text_surface.get_rect(center=rect.center)
+    #Draw out the text
     surface.blit(text_surface, text_rect)
 
 def drawTitle(font, surface, text, rect):
+    #Function to draw a title anywhere
     text_surface = font.render(text, True, BLACK)
     text_rect = text_surface.get_rect(center=rect.center)
+    #Draw the title
     surface.blit(text_surface, text_rect)
     
 def growCircle():
+    #Function to animate a growing circle as a transition
     global choose_weapon, grow_circle, radius
-    findEvents()
+    findEvents()    #Function to check if the player quits the program
+    #Add the circle's radius
     pygame.draw.circle(SCREEN, BLUE, (375, 350), radius)
     radius += 1
+    #If the radius is 600
     if radius == 600:
         choose_weapon = True
         grow_circle = False
         return
 
 def quitGame():
+    #Function to stop the program and quit the game
     pygame.quit()
     import sys
     sys.exit()
 
 def drawSwordSection():
+    #Function to draw the sword's section for the weaponry decision screen
     pygame.draw.rect(SCREEN, BLUE, (10, 300, 250, 400))
     pygame.draw.rect(SCREEN, BLACK, (10, 300, 250, 400), 3)
     pygame.draw.rect(SCREEN, WHITE, (30, 310, 210, 200))
     pygame.draw.rect(SCREEN, BLACK, (30, 310, 210, 200), 3)
+
+    #Draw out the text for difficulty and weapon
     SCREEN.blit(sword_text_surface, sword_text_rect)
     SCREEN.blit(difficulty_sword_surface, difficulty_sword_rect)
 
+    #Draw the button using the function
     drawButton(button_rect, WEAPON_BUTTON_COLOR, use_text, button_font, SCREEN)
+    #Outline the button
     pygame.draw.rect(SCREEN, BLACK, (20, 580, 228, 70), 3)
 
+    #Draw the sword image
     swordImage = pygame.image.load("sword.png")
     SCREEN.blit(swordImage, (100, 312))
 
 def drawBowSection():
+    #Function to draw the bow's section for the weaponry decision screen
     pygame.draw.rect(SCREEN, ORANGE, (275, 300, 250, 400))
     pygame.draw.rect(SCREEN, BLACK, (275, 300, 250, 400), 3)
     pygame.draw.rect(SCREEN, WHITE, (295, 310, 210, 200))
     pygame.draw.rect(SCREEN, BLACK, (295, 310, 210, 200), 3)
+
+    #Draw out the text for difficulty and weapon
     SCREEN.blit(bow_text_surface, bow_text_rect)
     SCREEN.blit(difficulty_bow_surface, difficulty_bow_rect)
 
+    #Draw out the button using the function
     drawButton(bow_button_rect, BOW_BUTTON_COLOR, use_text, button_font, SCREEN)
+    #Outline the button
     pygame.draw.rect(SCREEN, BLACK, (286, 580, 228, 70), 3)
 
+    #Create and draw a bow image
     bowImageUnscaled = pygame.image.load("bow.png").convert_alpha()
-
     bowImage = pygame.transform.scale(bowImageUnscaled, (150, 185.5))
     SCREEN.blit(bowImage, (330, 318))
 
 def drawBoomrngSection():
+    #Function to draw the boomerang's section for the weaponry decision screen
     pygame.draw.rect(SCREEN, PINK, (540, 300, 250, 400))
     pygame.draw.rect(SCREEN, BLACK, (540, 300, 250, 400), 3)
     pygame.draw.rect(SCREEN, WHITE, (560, 310, 210, 200))
     pygame.draw.rect(SCREEN, BLACK, (560, 310, 210, 200), 3)
+
+    #Draw out the text for the difficulty and weapon
     SCREEN.blit(boomrng_text_surface, boomrng_text_rect)
     SCREEN.blit(difficulty_boomrng_surface, difficulty_boomrng_rect)
 
+    #Draw out the button using the function
     drawButton(boomrng_button_rect, BOOMRNG_BUTTON_COLOR, use_text, button_font, SCREEN)
+    #Outline the button
     pygame.draw.rect(SCREEN, BLACK, (552, 580, 228, 70), 3)
 
+    #Create and draw the boomerang image
     boomrngImage = pygame.image.load("boomerang.png").convert_alpha()
     SCREEN.blit(boomrngImage, (600, 338))
 
 def checkKeys(keys):
     global choice, leftHolding, rightHolding
+    #Define the swipe sound
     swipe_sound = pygame.mixer.Sound("sounds/swipe_sound.mp3")
+
+    #If the player is not holding the 'LEFT' or 'A' key
     if leftHolding == False:
+        #If the player presses the 'LEFT' or 'A' key
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             choice -= 1
             leftHolding = True
+            #Play the swipe sound
             swipe_sound.play()
     
+    #If the player is not pressing 'LEFT' or 'A' key
     if not (keys[pygame.K_LEFT] or keys[pygame.K_a]):
         leftHolding = False
 
+    #If the player is not holding the 'RIGHT' or 'D' key
     if rightHolding == False:
+        #If the player presses the 'RIGHT' or 'D' key
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             choice += 1
             rightHolding = True
+            #Play the swipe sound
             swipe_sound.play()
     
+    #If the player is not pressing the 'RIGHT' or 'D' key
     if not (keys[pygame.K_RIGHT] or keys[pygame.K_d]):
         rightHolding = False
 
+    #The choice is changed everytime the player presses one of the keys
+    #If the choice is 4
     if choice == 4:
+        #Change it back to 1
         choice = 1
     
+    #If the choice is 0
     if choice == 0:
+        #Change it back to 3
         choice = 3
 
     #First Section
+    #If the choice is 1
     if choice == 1:
-        drawSwordSection()
-        checkCursor()
+        drawSwordSection()      #Function to draw the sword section
+        checkCursor()           #Function to check for the cursor
     
 
     #Second Section
+    #If the choice is 2
     if choice == 2:
-        drawBowSection()
-        checkBowHovered()
-        checkBowClicked()
+        drawBowSection()        #Function to draw the bow section
+        checkBowHovered()       #Function to check if the cursor is hovering the button
+        checkBowClicked()       #Function to check if the player clicked on the button
 
     #Third Section
+    #If the choice is 3
     if choice == 3:
-        drawBoomrngSection()
-        checkBoomrngHovered()
-        checkBoomrngClicked()
+        drawBoomrngSection()    #Function to draw the boomerang section
+        checkBoomrngHovered()   #Function to check if the cursor is hovering the button
+        checkBoomrngClicked()   #Function to check if the player clicked on the button
 
 def checkSpacePress(keys):
     global instructions, sound
-
+    #If the player presses the 'SPACE' key
     if keys[pygame.K_SPACE]:
         if sound == 0:
             sound = 1
+            #Play the click sound
             click_sound.play()
         instructions = False
 
 def createInstructions():
     global fromGuide, guide_clicked, menu, escape_holding
+    #Draw out the background
     SCREEN.blit(title_background, (-500, 0))
 
-
+    #If the function is called from the menu
     if fromGuide == True:
-
+        #If the player presses the 'ESC' key and is not holding the key
         if keys[pygame.K_ESCAPE] and escape_holding == False:
+            #Close the menu
             menu = False
             escape_holding = True
             fromGuide = False
             guide_clicked = False
 
-
+    #Define the fonts for the text in the instructions
     instruction_font = pygame.font.SysFont("Georgia", 90)
     guide_font = pygame.font.SysFont("Comic Sans MS", 20)
     controls_font = pygame.font.SysFont("Comic Sans MS", 20)
 
+    #Define the texts for the instructions
     instructions_text = "GUIDE"
 
     guide_text = "Welcome to Sorcerers Clash where you will have to defeat the dragons." 
@@ -3804,12 +3883,15 @@ def createInstructions():
     guide_text3 = "We need your help to defeating them once and for all." 
     guide_text4 = "To see the controls, it will be right under this."
 
+    #If the function is not called from the menu
     if fromGuide == False:
         guide_text5 = "Press 'SPACE' to commence the battle between life and death."
 
+    #If the function is called from the menu
     if fromGuide == True:
         guide_text5 = "Press 'ESC' to continue the battle between life and death."
 
+    #Make the text and it's coordinates
     instructions_surface = instruction_font.render(instructions_text, True, BLACK)
     instructions_rect = instructions_surface.get_rect()
     instructions_rect.center = (400, 50)
@@ -3838,6 +3920,7 @@ def createInstructions():
     guide_rect5 = guide_surface5.get_rect()
     guide_rect5.center = (400, 350)
 
+    #Draw out the text
     SCREEN.blit(instructions_surface, instructions_rect)
     SCREEN.blit(guide_surface, guide_rect)
     SCREEN.blit(guide_surface1, guide_rect1)
@@ -3847,6 +3930,7 @@ def createInstructions():
     SCREEN.blit(guide_surface5, guide_rect5)
 
     #Controls Dialogue
+    #Define the text for the controls
 
     controls_text0 = "CONTROLS"
     controls_text1 = "Press 'A' to move left"
@@ -3854,18 +3938,22 @@ def createInstructions():
     controls_text3 = "Press 'W' to jump up"
     controls_text4 = "Press 'SPACE' to attack with your weapon!"
 
+    #If the player chose the sword weapon
     if weapon_choice == SWORD:
         controls_text5 = "You chose a sword! Attack the enemy while facing it!"
         controls_text6 = "Your sword must reach the enemy to deal damage!"
 
+    #If the player chose the bow weapon
     elif weapon_choice == BOW:
         controls_text5 = "You chose a bow! Attack the enemy using your cursor!"
         controls_text6 = "Press the attack button while holding your mouse to the target!"
 
+    #If the player chose the boomerang weapon
     else:
         controls_text5 = "You chose a boomerang! Attack the enemy using your cursor!"
         controls_text6 = "Press the attack button while holding your mouse to the target!"
 
+    #Create the text and the coordinates
     controls0_surface = instruction_font.render(controls_text0, True, BLACK)
     controls0_rect = controls0_surface.get_rect()
     controls0_rect.center = (400, 450)
@@ -3894,6 +3982,7 @@ def createInstructions():
     controls6_rect = controls6_surface.get_rect()
     controls6_rect.center = (400, 730)
 
+    #Draw out the text for the controls
     SCREEN.blit(controls0_surface, controls0_rect)
     SCREEN.blit(controls1_surface, controls1_rect)
     SCREEN.blit(controls2_surface, controls2_rect)
@@ -3902,45 +3991,54 @@ def createInstructions():
     SCREEN.blit(controls5_surface, controls5_rect)
     SCREEN.blit(controls6_surface, controls6_rect)
 
+    #Update the game
     pygame.display.update()
 
 ############################################### GAME SCREEN ###################################################
 
 introduction = True
+#Loops the introduction
 while introduction == True:
+    #Set the frames per second to 30
     clock.tick(FPS)
-    if button_hover == True:
-        button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
     
-    else:
-        button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
+    #Make the button's coordinates and size
+    button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
 
+    #Define the fonts used
     button_font = pygame.font.SysFont("Comic Sans MS", font_size)
     title_font = pygame.font.SysFont("Georgia", 80)
     title_rect = pygame.Rect(250, 150, 300, 300)
 
-    title_background = pygame.image.load("title_background.png")
+    #Draw the background out
+    title_background = pygame.image.load("title_background.png").convert_alpha()
     SCREEN.blit(title_background, (-500, 0))
 
-    findEvents()
+    findEvents()    #Function to check if the player closes the program
 
-    checkCursor()
+    checkCursor()   #Function to check if the cursor overlaps or clicks the button
 
+    #Draw the title and button using the functions
     drawTitle(title_font, SCREEN, title_text, title_rect)
     drawButton(button_rect, BUTTON_COLOR, button_text, button_font, SCREEN)
 
+    #If the button is clicked
     if button_clicked == True:
         click_sound = pygame.mixer.Sound("sounds/button_click.wav")
+        #Play the click sound
         click_sound.play()
         introduction = False
+        #Set the cursor to an arrow
         pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_ARROW)
         button_hover = 0
         button_x = 0
         button_y = 0
         grow_circle = True
     
+    #Update the game
     pygame.display.update()
 
+#Animate for the growing circle transition
 while grow_circle == True:
     growCircle()
     
@@ -3949,16 +4047,23 @@ while grow_circle == True:
 choose_weapon = True
 button_clicked = False
 
+#Loop the weaponry choosing
 while choose_weapon == True:
-    findEvents()
+    findEvents()    #Function to check if the player closes the program
 
+    #Draw out the background
     SCREEN.blit(title_background, (-500, 0))
+    #Define the text
     weapon_text = "Choose Your Weapon"
     weapon_rect = pygame.Rect(250, 10, 300, 300)
+    #Draw the title using the function
     drawTitle(title_font, SCREEN, weapon_text, weapon_rect)
 
+    #Define the font for the weapon's difficulty's text
     font = pygame.font.SysFont("Comic Sans MS", 30)
     difficulty_font = pygame.font.SysFont("Georgia", 20)
+
+    #Define the texts for weapons and difficulty
     bow_text = "BOW"
     sword_text = "SWORD"
     boomrng_text = "BOOMERANG"
@@ -3968,6 +4073,7 @@ while choose_weapon == True:
     difficulty_sword_text = "Difficulty: HARD"
     difficulty_boomrng_text = "Difficulty: Easy"
 
+    #Create the texts
     difficulty_bow_surface = difficulty_font.render(difficulty_bow_text, True, BLACK)
     difficulty_bow_rect = difficulty_bow_surface.get_rect(center=(400, 560))
 
@@ -3989,57 +4095,73 @@ while choose_weapon == True:
     boomrng_text_rect = boomrng_text_surface.get_rect()
     boomrng_text_rect.center = (665, 530)
 
+    #Create the button's hitbox
     button_rect = pygame.Rect(20, 580, 228, 70)
     bow_button_rect = pygame.Rect(286, 580, 228, 70)
     boomrng_button_rect = pygame.Rect(552, 580, 228, 70)
     
+    #Create the subtitle's text
     subtitle_surface = font.render(subtitle_text, True, BLACK)
     subtitle_rect = subtitle_surface.get_rect()
     subtitle_rect.center = (400, 225)
 
+    #Draw the subtitle
     SCREEN.blit(subtitle_surface, subtitle_rect)
 
-
+    #Check for the keys the player presses
     keys = pygame.key.get_pressed()
-    checkKeys(keys)
+    checkKeys(keys)     #Function to check for the keys the player presses
 
+    #If the cursor is not hovering on any button
     if button_hover == 0:
+        #Set the cursor to an arrow
         pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
+    #If the button is clicked
     if button_clicked == True:
+        #Play the click sound
         click_sound.play()
+        #Set the button's color to the click color
         BOW_BUTTON_COLOR = BUTTON_CLICK_COLOR
         BOOMRNG_BUTTON_COLOR = BUTTON_CLICK_COLOR
-        checkKeys(keys)
         choose_weapon = False
+        #Set the cursor to an arrow
         pygame.mouse.set_system_cursor(pygame.SYSTEM_CURSOR_ARROW)
         button_hover = 0
         radius = 0
         grow_circle = True
 
+    #Update the game
     pygame.display.update()
 
+#Animate the growing circle transition
 while grow_circle == True:
-    growCircle()
+    growCircle()        #Function to animate the growing circl
 
+    #Update the game
     pygame.display.update()
 
 instructions = True
 
+#Loops the instructions
 while instructions:
-    findEvents()
+    findEvents()        #Function to check if the player exits the program
     
+    #Check for the keys the player presses
     keys = pygame.key.get_pressed()
-    checkSpacePress(keys)
+    checkSpacePress(keys)   #Function to check if the player presses the 'SPACE' key
 
-    createInstructions()
+    createInstructions()    #Function to draw out the instructions
 
 grow_circle = True
 radius = 0
+#Animate the growing circle animation
 while grow_circle == True:
-    growCircle()
+    growCircle()    #Function to animate the growing circle transition
 
+    #Update the game
     pygame.display.update()
+    
 ############################################### GAME LOGIC ###################################################
 
-startGame()
+startGame()     #Function to start the game
